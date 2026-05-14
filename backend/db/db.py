@@ -14,7 +14,7 @@ MYSQL_CONFIG = {
 }
 
 COOKIE_SECRET = os.environ.get("COOKIE_SECRET", "super_secret_key_change_me")
-PORT = int(os.environ.get("PORT", "8888"))
+PORT = int(os.environ.get("PORT", "8888"))  # Railway usa variabile PORT
 
 _pool = None
 
