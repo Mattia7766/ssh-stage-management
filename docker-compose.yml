@@ -1,0 +1,40 @@
+services:
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: DB_SSH_todo_app2
+      MYSQL_USER: student
+      MYSQL_PASSWORD: Pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "student", "-pPass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: student
+      DB_PASSWORD: Pass
+      DB_NAME: DB_SSH_todo_app2
+      COOKIE_SECRET: cambia_questa_chiave_segreta
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

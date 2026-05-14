@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Stage·Review</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { padding: 0; display: block; background: #f1f5f9; }
+
+        /* Intestazione pagina */
+        .page-header { margin-bottom: 1.75rem; }
+        .page-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.7rem; color: var(--dark); margin-bottom: 0.2rem;
+        }
+        .page-header p { color: var(--gray-400); font-size: 0.86rem; }
+
+        /* Statistiche */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(190px,1fr));
+            gap: 1.1rem; margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: #fff; border-radius: 14px;
+            padding: 1.4rem 1.5rem; border: 1px solid #e8eaed;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+            cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .stat-card::after {
+            content:''; position:absolute; top:0; left:0; right:0; height:3px;
+            background: var(--primary); opacity:0; transition: opacity 0.2s;
+            border-radius: 14px 14px 0 0;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.08); border-color: var(--primary); }
+        .stat-card:hover::after { opacity: 1; }
+        .stat-icon {
+            width: 38px; height: 38px; border-radius: 9px;
+            background: var(--primary-light);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; margin-bottom: 0.9rem; color: var(--primary);
+        }
+        .stat-card h3 {
+            font-size: 2rem; font-weight: 800; color: var(--dark);
+            margin-bottom: 0.15rem; font-family: 'Plus Jakarta Sans',sans-serif;
+            letter-spacing: -0.02em; background: none; -webkit-background-clip: unset;
+        }
+        .stat-card p { font-size: 0.75rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.06em; }
+
+        /* Accesso rapido */
+        .quick-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(170px,1fr));
+            gap: 0.875rem; margin-bottom: 2rem;
+        }
+        .ql-card {
+            background: #fff; border-radius: 11px; padding: 1.1rem 1.2rem;
+            border: 1px solid #e8eaed; text-decoration: none; color: var(--dark);
+            display: flex; align-items: center; gap: 0.75rem;
+            font-weight: 600; font-size: 0.85rem; cursor: pointer;
+            transition: all 0.16s; box-shadow: 0 1px 3px rgba(0,0,0,.04);
+            background: none; width: 100%; text-align: left;
+        }
+        .ql-card span.ql-icon {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: var(--primary-light); display: flex;
+            align-items: center; justify-content: center;
+            color: var(--primary); font-size: 0.9rem; flex-shrink: 0;
+        }
+        .ql-card:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,.08); border-color: var(--primary); color: var(--primary); background: #fff; }
+
+        h2 { margin-bottom: 0; }
+        table { margin-top: 0; }
+        .form-card { background: #f8f9fb; padding: 1.4rem; border-radius: 11px; border: 1px solid #e8eaed; margin-bottom: 1.25rem; }
+
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .import-export-grid { grid-template-columns: 1fr !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-name">Stage<em>·</em>Review</div>
+            <div class="brand-role">Admin</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Principale</div>
+            <button class="nav-item active" id="nav-dashboard" onclick="showSection('dashboard')">
+                <i class="fa fa-house"></i> Dashboard
+            </button>
+            <button class="nav-item" id="nav-createUser" onclick="showSection('createUser')">
+                <i class="fa fa-users"></i> Gestione Utenti
+            </button>
+            <button class="nav-item" id="nav-responses" onclick="showSection('responses')">
+                <i class="fa fa-clipboard-list"></i> Questionari
+            </button>
+
+            <a class="nav-item" href="enti.html"><i class="fa fa-school"></i> Enti &amp; Stage</a>
+
+            <div class="nav-label">Analisi</div>
+            <a class="nav-item" href="charts.html"><i class="fa fa-chart-bar"></i> Grafici</a>
+            <a class="nav-item" href="ets_analysis.html"><i class="fa fa-building"></i> Analisi ETS</a>
+
+            <div class="nav-label">Sistema</div>
+            <button class="nav-item" id="nav-importExport" onclick="showSection('importExport')">
+                <i class="fa fa-database"></i> Import / Export
+            </button>
+            <button class="nav-item danger" onclick="logout()" style="margin-top:0.75rem;">
+                <i class="fa fa-right-from-bracket"></i> Logout
+            </button>
+        </nav>
+        <div class="sidebar-footer">Stage·Review v1.0</div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div style="display:flex;align-items:center;gap:0.875rem;">
+                <button class="hamburger" onclick="openSidebar()"><i class="fa fa-bars"></i></button>
+                <span class="topbar-title" id="topbarTitle">Dashboard</span>
+            </div>
+            <div class="topbar-actions">
+                <button class="tb-btn" onclick="exportData()"><i class="fa fa-download"></i> Esporta</button>
+                <button class="tb-btn red" onclick="logout()"><i class="fa fa-right-from-bracket"></i> Esci</button>
+            </div>
+        </header>
+
+        <main class="page-body">
+
+            <!-- DASHBOARD -->
+            <div id="dashboardSection" class="section active">
+                <div class="page-header">
+                    <h2>Panoramica</h2>
+                    <p>Riepilogo della situazione attuale del portale.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card" id="userCount" onclick="showSection('createUser')">
+                        <div class="stat-icon"><i class="fa fa-users"></i></div>
+                        <h3>—</h3>
+                        <p>Utenti registrati</p>
+                    </div>
+                    <div class="stat-card" id="responseCount" onclick="showSection('responses')">
+                        <div class="stat-icon"><i class="fa fa-clipboard-check"></i></div>
+                        <h3>—</h3>
+                        <p>Questionari inviati</p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:1rem;">
+                    <p style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--gray-400);margin-bottom:0.75rem;">Accesso rapido</p>
+                </div>
+                <div class="quick-grid">
+                    <button class="ql-card" onclick="showSection('createUser')">
+                        <span class="ql-icon"><i class="fa fa-user-plus"></i></span> Crea utente
+                    </button>
+                    <button class="ql-card" onclick="showSection('responses')">
+                        <span class="ql-icon"><i class="fa fa-clipboard-list"></i></span> Questionari
+                    </button>
+                    <a class="ql-card" href="enti.html" style="background:#fff;">
+                        <span class="ql-icon"><i class="fa fa-school"></i></span> Enti &amp; Stage
+                    </a>
+                    <a class="ql-card" href="charts.html" style="background:#fff;">
+                        <span class="ql-icon"><i class="fa fa-chart-pie"></i></span> Grafici
+                    </a>
+                    <a class="ql-card" href="ets_analysis.html" style="background:#fff;">
+                        <span class="ql-icon"><i class="fa fa-building"></i></span> Analisi ETS
+                    </a>
+                    <button class="ql-card" onclick="showSection('importExport')">
+                        <span class="ql-icon"><i class="fa fa-database"></i></span> Import/Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- GESTIONE UTENTI -->
+            <div id="createUserSection" class="section">
+                <div class="page-header">
+                    <h2>Gestione Utenti</h2>
+                    <p>Crea nuovi account e gestisci quelli esistenti.</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="cc-header">
+                        <h3><i class="fa fa-user-plus" style="color:var(--primary);margin-right:0.5rem;"></i>Crea nuovo utente</h3>
+                    </div>
+                    <div class="cc-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                            <input id="newEmail" type="email" placeholder="Email" style="margin-bottom:0;">
+                            <input id="newPassword" type="password" placeholder="Password" style="margin-bottom:0;">
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr auto;gap:1rem;margin-top:1rem;align-items:center;">
+                            <select id="newRole" style="margin-bottom:0;">
+                                <option value="USER">Studente (USER)</option>
+                                <option value="PROFESSORE">Professore</option>
+                                <option value="ADMIN">Admin</option>
+                            </select>
+                            <button onclick="createUser()" style="width:auto;padding:0.85rem 1.5rem;">
+                                <i class="fa fa-plus"></i> Crea
+                            </button>
+                        </div>
+                        <div id="createUserMessage" style="margin-top:0.75rem;"></div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="cc-header">
+                        <h3><i class="fa fa-users" style="color:var(--primary);margin-right:0.5rem;"></i>Utenti esistenti</h3>
+                    </div>
+                    <div class="cc-body">
+                        <div class="search-row" style="margin-bottom:1.25rem;">
+                            <div class="search-field">
+                                <input id="searchEmail" type="text" placeholder="Cerca per email..." oninput="filterUsers()" style="margin-bottom:0;">
+                            </div>
+                            <div class="search-field">
+                                <select id="searchRole" onchange="filterUsers()" style="margin-bottom:0;">
+                                    <option value="">Tutti i ruoli</option>
+                                    <option value="USER">USER</option>
+                                    <option value="PROFESSORE">PROFESSORE</option>
+                                    <option value="ADMIN">ADMIN</option>
+                                </select>
+                            </div>
+                            <button onclick="clearUserSearch()" style="width:auto;padding:0.85rem 1.25rem;background:var(--gray-600);">
+                                <i class="fa fa-xmark"></i> Azzera
+                            </button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table id="usersTable">
+                                <thead><tr><th>ID</th><th>Email</th><th>Ruolo</th><th>Questionari</th><th>Azioni</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IMPORT / EXPORT -->
+            <div id="importExportSection" class="section">
+                <div class="page-header">
+                    <h2>Import / Export</h2>
+                    <p>Salva o ripristina tutti i dati del sistema in formato JSON.</p>
+                </div>
+                <div class="import-export-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+                    <div class="content-card">
+                        <div class="cc-header">
+                            <h3><i class="fa fa-download" style="color:var(--primary);margin-right:0.5rem;"></i>Esporta dati</h3>
+                        </div>
+                        <div class="cc-body">
+                            <p style="color:var(--gray-600);font-size:0.87rem;margin-bottom:1.25rem;line-height:1.65;">
+                                Scarica tutti gli utenti, questionari, enti e assegnazioni in un file <code>stage_review_export.json</code>.
+                            </p>
+                            <button onclick="exportData()" style="width:auto;padding:0.875rem 1.75rem;">
+                                <i class="fa fa-download"></i> Scarica JSON
+                            </button>
+                            <div id="exportMessage" style="margin-top:0.75rem;"></div>
+                        </div>
+                    </div>
+                    <div class="content-card">
+                        <div class="cc-header">
+                            <h3><i class="fa fa-upload" style="color:var(--primary);margin-right:0.5rem;"></i>Importa dati</h3>
+                        </div>
+                        <div class="cc-body">
+                            <p style="color:var(--gray-600);font-size:0.87rem;margin-bottom:1.25rem;line-height:1.65;">
+                                Carica un JSON esportato in precedenza. Utenti ed enti già presenti vengono saltati automaticamente.
+                            </p>
+                            <label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--gray-600);display:block;margin-bottom:0.4rem;">Seleziona file JSON</label>
+                            <input type="file" id="importFile" accept=".json" style="margin-bottom:1rem;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);width:100%;background:var(--white);">
+                            <button onclick="importData()" style="width:auto;padding:0.875rem 1.75rem;">
+                                <i class="fa fa-upload"></i> Importa JSON
+                            </button>
+                            <div id="importMessage" style="margin-top:0.75rem;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUESTIONARI -->
+            <div id="responsesSection" class="section">
+                <div class="page-header">
+                    <h2>Questionari</h2>
+                    <p>Tutte le risposte inviate dagli studenti.</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="cc-header">
+                        <h3><i class="fa fa-filter" style="color:var(--primary);margin-right:0.5rem;"></i>Filtri</h3>
+                    </div>
+                    <div class="cc-body">
+                        <div class="search-row">
+                            <div class="search-field">
+                                <input id="filterStudente" type="text" placeholder="Cerca studente..." oninput="filterResponses()" style="margin-bottom:0;">
+                            </div>
+                            <div class="search-field">
+                                <input id="filterETS" type="text" placeholder="Filtra per ETS..." oninput="filterResponses()" style="margin-bottom:0;">
+                            </div>
+                            <button onclick="clearFilters()" style="width:auto;padding:0.85rem 1.25rem;background:var(--gray-600);">
+                                <i class="fa fa-xmark"></i> Azzera
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="cc-body" style="padding:0;overflow-x:auto;">
+                        <p id="noResultsMessage" style="display:none;text-align:center;color:var(--gray-400);padding:3rem 1rem;font-size:0.95rem;">
+                            <i class="fa fa-inbox" style="font-size:2rem;display:block;margin-bottom:0.75rem;opacity:0.35;"></i>
+                            Nessuna risposta trovata.
+                        </p>
+                        <table id="responsesTable" style="display:none;margin-top:0;">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;"></th>
+                                    <th>Studente / Email</th>
+                                    <th>ETS</th>
+                                    <th>Data invio</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="responsesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- MODAL PCTO -->
+<div id="pctoModalOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(28,25,23,0.55);backdrop-filter:blur(4px);overflow-y:auto;padding:1rem;box-sizing:border-box;">
+  <div style="background:var(--white);border-radius:var(--radius-xl);box-shadow:0 8px 40px rgba(28,25,23,0.22);border:1px solid var(--border);width:100%;max-width:480px;margin:auto;padding:0;overflow:hidden;">
+    <div style="padding:1.5rem 1.75rem 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem;">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--dark);">Assegna PCTO</h3>
+        <button onclick="closePctoModal()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--gray-100);color:var(--gray-600);font-size:1.1rem;cursor:pointer;display:grid;place-items:center;padding:0;box-shadow:none;">✕</button>
+      </div>
+      <p id="pctoModalSubtitle" style="font-size:0.86rem;color:var(--gray-600);margin-bottom:1.25rem;"></p>
+    </div>
+    <div style="padding:0 1.75rem 1.75rem;display:flex;flex-direction:column;gap:1rem;">
+      <div id="pctoPrefsBox" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:0.75rem 1rem;"></div>
+      <div>
+        <label style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-600);display:block;margin-bottom:0.35rem;">Azienda / Ente *</label>
+        <select id="pctoEnteSelect" onchange="pctoCheckDisponibilita()" style="width:100%;margin-bottom:0;"><option value="">Caricamento enti...</option></select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;">
+        <div>
+          <label style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-600);display:block;margin-bottom:0.35rem;">Data inizio *</label>
+          <input type="date" id="pctoDataInizio" onchange="pctoCheckDisponibilita()" style="width:100%;margin-bottom:0;">
+        </div>
+        <div>
+          <label style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-600);display:block;margin-bottom:0.35rem;">Data fine *</label>
+          <input type="date" id="pctoDataFine" onchange="pctoCheckDisponibilita()" style="width:100%;margin-bottom:0;">
+        </div>
+      </div>
+      <div id="pctoDispBox"></div>
+      <div>
+        <label style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.85rem;font-weight:600;color:var(--gray-700);cursor:pointer;">
+          <input type="checkbox" id="pctoOrariToggle" onchange="pctoToggleOrari()" style="width:15px;height:15px;">
+          Personalizza orari per questo studente
+        </label>
+        <div id="pctoOrariSection" style="display:none;margin-top:0.75rem;border:1px solid var(--border);border-radius:12px;padding:1rem;background:#f8fafc;">
+          <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--gray-600);margin-bottom:0.75rem;">Orari personalizzati</p>
+          <div id="pctoOrariGrid"></div>
+        </div>
+      </div>
+      <div id="pctoModalMessage"></div>
+      <div style="display:flex;gap:0.75rem;margin-top:0.25rem;">
+        <button onclick="closePctoModal()" style="flex:1;background:var(--gray-100);color:var(--gray-600);border:1px solid var(--border);box-shadow:none;padding:0.875rem;">Fallo più tardi</button>
+        <button onclick="assignPcto()" style="flex:2;padding:0.875rem;"><i class="fa fa-check"></i> Assegna PCTO</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js?v=5"></script>
+<script>
+function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+const _titleMap = {
+    dashboard: 'Dashboard',
+    createUser: 'Gestione Utenti',
+    responses: 'Questionari',
+    importExport: 'Import / Export',
+};
+
+window.showSection = function(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(name + 'Section');
+    if (el) el.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    const nav = document.getElementById('nav-' + name);
+    if (nav) nav.classList.add('active');
+    document.getElementById('topbarTitle').textContent = _titleMap[name] || name;
+    history.replaceState(null, '', '#' + name);
+    closeSidebar();
+    if (name === 'createUser' && typeof loadUsersList === 'function') loadUsersList();
+    if (name === 'responses'  && typeof loadSurveyResponses === 'function') loadSurveyResponses();
+};
+
+// Naviga alla sezione indicata dal fragment URL (es. dashboard.html#importExport)
+(function () {
+    var hash = location.hash.slice(1);
+    if (['createUser', 'responses', 'importExport'].indexOf(hash) !== -1) {
+        window.showSection(hash);
+    }
+}());
+</script>
+</body>
+</html>

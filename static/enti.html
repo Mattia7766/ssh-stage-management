@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Enti &amp; Stage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { padding: 0; display: block; background: #f1f5f9; }
+
+        /* ── page content ── */
+        .page-content { max-width: 100%; }
+        .page-tabs {
+            display: flex; gap: 0.5rem; flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .ptab {
+            padding: 0.55rem 1.4rem; border-radius: 30px;
+            border: 1.5px solid #e5e7eb; background: #fff; color: #78716c;
+            font-weight: 600; cursor: pointer; font-family: inherit;
+            font-size: 0.88rem; transition: all 0.18s; width: auto; box-shadow: none;
+        }
+        .ptab.active, .ptab:hover {
+            background: #0f766e; color: white; border-color: #0f766e;
+            box-shadow: 0 4px 12px rgba(15,118,110,0.2);
+        }
+        /* cards */
+        .enti-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; margin-top: 1rem; }
+        .ente-card { background: #fff; border-radius: 14px; padding: 1.25rem 1.5rem; border: 1px solid #e8eaed; box-shadow: 0 1px 4px rgba(0,0,0,.04); transition: all 0.2s; }
+        .ente-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.08); border-color: #0f766e; }
+        .ente-card h4 { font-size: 1.05rem; margin-bottom: 0.5rem; color: #0d6560; }
+        .ente-card .ente-meta { font-size: 0.85rem; color: #78716c; line-height: 1.8; }
+        .ente-card .ente-stud-count { margin-top: 0.75rem; font-size: 0.82rem; background: #f4f2ee; border-radius: 6px; padding: 0.3rem 0.75rem; display: inline-block; font-weight: 600; color: #44403c; }
+        .ente-card .posti-badge { display: inline-block; margin-left: 0.5rem; font-size: 0.82rem; font-weight: 600; padding: 0.3rem 0.75rem; border-radius: 6px; }
+        .posti-ok   { background: #d1fae5; color: #065f46; }
+        .posti-warn { background: #fef3c7; color: #92400e; }
+        .posti-full { background: #fee2e2; color: #991b1b; }
+        .posti-none { background: #f4f2ee; color: #78716c; }
+        .ente-card .ente-actions { margin-top: 0.9rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .phase-pre     { background: #fef3c7 !important; color: #92400e !important; }
+        .phase-durante { background: #cffafe !important; color: #155e75 !important; }
+        .phase-post    { background: #d1fae5 !important; color: #065f46 !important; }
+        .assign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+        @media (max-width: 640px) { .assign-grid { grid-template-columns: 1fr; } }
+        .empty-placeholder { text-align: center; padding: 3rem 1rem; color: #a8a29e; }
+        .empty-placeholder .ep-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+        .orari-section { border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 1.25rem; margin-top: 0.75rem; background: #f8f9fb; }
+        .orari-section h5 { font-size: 0.85rem; font-weight: 700; color: #44403c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+        .orari-row { display: grid; grid-template-columns: auto 90px 1fr auto auto; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; }
+        .orari-row label { font-size: 0.85rem; font-weight: 600; min-width: 80px; }
+        .orari-row input[type="time"] { padding: 0.35rem 0.6rem; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.85rem; background: white; margin-bottom: 0; width: auto; }
+        .orari-row input[type="time"]:disabled { background: #f4f2ee; color: #a8a29e; }
+        .orari-sep { font-size: 0.8rem; color: #a8a29e; }
+        .orari-row input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+        .disp-box { margin-top: 0.5rem; padding: 0.65rem 1rem; border-radius: 8px; font-size: 0.88rem; font-weight: 600; }
+        .disp-ok   { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+        .disp-warn { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .disp-full { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .toggle-label { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #44403c; cursor: pointer; margin-top: 0.5rem; }
+        .toggle-label input[type="checkbox"] { width: 16px; height: 16px; }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-name">Stage<em>·</em>Review</div>
+            <div class="brand-role">Admin</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Principale</div>
+            <a class="nav-item" href="dashboard.html"><i class="fa fa-house"></i> Dashboard</a>
+            <a class="nav-item" href="dashboard.html#createUser"><i class="fa fa-users"></i> Gestione Utenti</a>
+            <a class="nav-item" href="dashboard.html#responses"><i class="fa fa-clipboard-list"></i> Questionari</a>
+            <a class="nav-item active" href="enti.html"><i class="fa fa-school"></i> Enti &amp; Stage</a>
+            <div class="nav-label">Analisi</div>
+            <a class="nav-item" href="charts.html"><i class="fa fa-chart-bar"></i> Grafici</a>
+            <a class="nav-item" href="ets_analysis.html"><i class="fa fa-building"></i> Analisi ETS</a>
+            <div class="nav-label">Sistema</div>
+            <a class="nav-item" href="dashboard.html#importExport"><i class="fa fa-database"></i> Import / Export</a>
+            <button class="nav-item danger" onclick="fetch('/api/logout',{method:'POST'}).then(()=>location.href='login.html')" style="margin-top:0.75rem;"><i class="fa fa-right-from-bracket"></i> Logout</button>
+
+        </nav>
+        <div class="sidebar-footer">Stage·Review v1.0</div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div style="display:flex;align-items:center;gap:0.875rem;">
+                <button class="hamburger" onclick="openSidebar()"><i class="fa fa-bars"></i></button>
+                <span class="topbar-title"><i class="fa fa-school" style="color:#0f766e;margin-right:0.4rem;"></i>Enti &amp; Stage</span>
+            </div>
+            <div class="topbar-actions">
+                <button class="tb-btn" onclick="loadEnti(); loadAssegnazioni();"><i class="fa fa-rotate"></i> Aggiorna</button>
+            </div>
+        </header>
+
+        <main class="page-body">
+            <!-- Tabs -->
+            <div class="page-tabs">
+                <button class="ptab active" id="tabEnti"         onclick="switchTab('enti')"><i class="fa fa-building"></i> Enti</button>
+                <button class="ptab"        id="tabAssegnazioni" onclick="switchTab('assegnazioni')"><i class="fa fa-clipboard-list"></i> Assegnazioni</button>
+            </div>
+
+            <!-- TAB ENTI -->
+            <div id="tabEntiContent">
+                <div class="content-card">
+                    <div class="cc-header"><h3><i class="fa fa-plus" style="color:#0f766e;margin-right:0.4rem;"></i>Nuovo ente</h3></div>
+                    <div class="cc-body">
+                        <div class="search-row" style="flex-wrap:wrap;">
+                            <div class="search-field" style="flex:2;min-width:200px;"><input id="enteNome" type="text" placeholder="Nome ente *" style="margin-bottom:0;"></div>
+                            <div class="search-field" style="flex:2;min-width:200px;"><input id="enteIndirizzo" type="text" placeholder="Indirizzo" style="margin-bottom:0;"></div>
+                            <div class="search-field" style="flex:2;min-width:200px;"><input id="enteReferente" type="text" placeholder="Referente" style="margin-bottom:0;"></div>
+                            <div class="search-field" style="flex:1;min-width:120px;"><input id="entePosti" type="number" min="0" placeholder="Posti" style="margin-bottom:0;"></div>
+                        </div>
+                        <div style="margin-top:0.75rem;"><input id="enteDescrizione" type="text" placeholder="Descrizione (opzionale)" style="margin-bottom:0;"></div>
+                        <div class="orari-section" id="newOrariSection"><h5><i class="fa fa-clock" style="margin-right:0.4rem;"></i>Orari lavorativi (opzionale)</h5><div id="newOrariGrid"></div></div>
+                        <div style="margin-top:0.75rem;"><button onclick="createEnte()" style="width:auto;padding:0.875rem 1.5rem;"><i class="fa fa-plus"></i> Crea ente</button></div>
+                        <div id="createEnteMsg" style="margin-top:0.5rem;"></div>
+                    </div>
+                </div>
+                <div id="entiGrid" class="enti-grid">
+                    <div class="empty-placeholder"><div class="ep-icon"><i class="fa fa-spinner fa-spin"></i></div><p>Caricamento...</p></div>
+                </div>
+            </div>
+
+            <!-- TAB ASSEGNAZIONI -->
+            <div id="tabAssegnazioniContent" style="display:none;">
+                <div class="content-card">
+                    <div class="cc-header"><h3><i class="fa fa-plus" style="color:#0f766e;margin-right:0.4rem;"></i>Nuova assegnazione</h3></div>
+                    <div class="cc-body">
+                        <div class="assign-grid">
+                            <div><label style="font-size:0.85rem;font-weight:600;color:#78716c;">Studente *</label><select id="assignUser" onchange="loadStudentPreferences()" style="margin-top:0.25rem;"></select></div>
+                            <div><label style="font-size:0.85rem;font-weight:600;color:#78716c;">Ente *</label><select id="assignEnte" onchange="checkDisponibilita('new')" style="margin-top:0.25rem;"></select></div>
+                            <div><label style="font-size:0.85rem;font-weight:600;color:#78716c;">Data inizio *</label><input id="assignDataInizio" type="date" onchange="checkDisponibilita('new')" style="margin-top:0.25rem;margin-bottom:0;"></div>
+                            <div><label style="font-size:0.85rem;font-weight:600;color:#78716c;">Data fine *</label><input id="assignDataFine" type="date" onchange="checkDisponibilita('new')" style="margin-top:0.25rem;margin-bottom:0;"></div>
+                        </div>
+                        <div id="studentPrefBox" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:0.65rem 1rem;margin-top:0.6rem;"></div>
+                        <div id="newDispBox"></div>
+                        <div style="margin-top:0.75rem;"><input id="assignNote" type="text" placeholder="Note (opzionale)" style="margin-bottom:0;"></div>
+                        <div style="margin-top:0.75rem;">
+                            <label class="toggle-label"><input type="checkbox" id="newOrariToggle" onchange="toggleOrariPersonalizzati('new')"> <i class="fa fa-clock" style="margin-right:0.25rem;"></i>Personalizza orari per questo studente</label>
+                            <div id="newOrariPersonalizzati" style="display:none;margin-top:0.75rem;"><div class="orari-section"><h5>Orari personalizzati studente</h5><div id="newOrariPersGrid"></div></div></div>
+                        </div>
+                        <div style="margin-top:0.75rem;"><button onclick="createAssignment()" style="width:auto;padding:0.875rem 2rem;"><i class="fa fa-check"></i> Assegna studente</button></div>
+                        <div id="createAssignMsg" style="margin-top:0.5rem;"></div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="cc-header"><h3><i class="fa fa-filter" style="color:#0f766e;margin-right:0.4rem;"></i>Filtra assegnazioni</h3></div>
+                    <div class="cc-body">
+                        <div class="search-row">
+                            <div class="search-field"><input id="filterAssignStud" type="text" placeholder="Filtra per email studente..." oninput="filterAssignments()" style="margin-bottom:0;"></div>
+                            <div class="search-field"><input id="filterAssignEnte" type="text" placeholder="Filtra per nome ente..." oninput="filterAssignments()" style="margin-bottom:0;"></div>
+                            <div class="search-field">
+                                <select id="filterAssignPhase" onchange="filterAssignments()" style="margin-bottom:0;">
+                                    <option value="">Tutte le fasi</option>
+                                    <option value="pre">Prima dell'inizio</option>
+                                    <option value="durante">In corso</option>
+                                    <option value="post">Terminato</option>
+                                </select>
+                            </div>
+                            <button onclick="clearAssignFilters()" style="width:auto;padding:0.85rem 1.25rem;background:#78716c;"><i class="fa fa-xmark"></i> Azzera</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="cc-body" style="padding:0;overflow-x:auto;">
+                        <table id="assignmentsTable" style="margin-top:0;">
+                            <thead><tr><th>Studente</th><th>Ente</th><th>Data inizio</th><th>Data fine</th><th>Fase</th><th>Note</th><th>Azioni</th></tr></thead>
+                            <tbody id="assignmentsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+
+function openSidebar()  { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('open'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════════════════
+let pageEnti        = [];
+let pageStudents    = [];
+let pageAssignments = [];
+let assignCounts    = {};
+let forceCreate     = false;
+
+// ══════════════════════════════════════════════════════════════════════════
+//  ORARI HELPERS
+// ══════════════════════════════════════════════════════════════════════════
+const GIORNI = [
+    { key: "lunedi",    label: "Lunedi" },
+    { key: "martedi",   label: "Martedi" },
+    { key: "mercoledi", label: "Mercoledi" },
+    { key: "giovedi",   label: "Giovedi" },
+    { key: "venerdi",   label: "Venerdi" },
+    { key: "sabato",    label: "Sabato" },
+    { key: "domenica",  label: "Domenica" },
+];
+
+function buildOrariGrid(containerId, prefix, defaults) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = "";
+    GIORNI.forEach(g => {
+        const def    = defaults && defaults[g.key];
+        const attivo = def ? def.attivo : (g.key !== "sabato" && g.key !== "domenica");
+        const inizio = def ? (def.inizio || "09:00") : "09:00";
+        const fine   = def ? (def.fine   || "17:00") : "17:00";
+        const row    = document.createElement("div");
+        row.className = "orari-row";
+        row.innerHTML = `
+            <input type="checkbox" id="${prefix}_${g.key}_attivo" ${attivo ? "checked" : ""}
+                   onchange="toggleGiorno('${prefix}','${g.key}')">
+            <label for="${prefix}_${g.key}_attivo">${g.label}</label>
+            <input type="time" id="${prefix}_${g.key}_inizio" value="${inizio}" ${!attivo ? "disabled" : ""}>
+            <span class="orari-sep">&#8594;</span>
+            <input type="time" id="${prefix}_${g.key}_fine"   value="${fine}"   ${!attivo ? "disabled" : ""}>`;
+        container.appendChild(row);
+    });
+}
+
+function toggleGiorno(prefix, key) {
+    const cb     = document.getElementById(`${prefix}_${key}_attivo`);
+    const inizio = document.getElementById(`${prefix}_${key}_inizio`);
+    const fine   = document.getElementById(`${prefix}_${key}_fine`);
+    if (inizio) inizio.disabled = !cb.checked;
+    if (fine)   fine.disabled   = !cb.checked;
+}
+
+function readOrariGrid(prefix) {
+    const result = {};
+    GIORNI.forEach(g => {
+        const cb = document.getElementById(`${prefix}_${g.key}_attivo`);
+        if (!cb) return;
+        result[g.key] = {
+            attivo: cb.checked,
+            inizio: document.getElementById(`${prefix}_${g.key}_inizio`).value || "09:00",
+            fine:   document.getElementById(`${prefix}_${g.key}_fine`).value   || "17:00",
+        };
+    });
+    const anyActive = Object.values(result).some(v => v.attivo);
+    return anyActive ? result : null;
+}
+
+function toggleOrariPersonalizzati(ctx) {
+    const cb    = document.getElementById(`${ctx}OrariToggle`);
+    const div   = document.getElementById(`${ctx}OrariPersonalizzati`);
+    const grdId = `${ctx}OrariPersGrid`;
+    if (!div) return;
+    div.style.display = cb.checked ? "" : "none";
+    if (cb.checked) {
+        const enteId = parseInt(document.getElementById(ctx === "new" ? "assignEnte" : "eaEnte")?.value);
+        const ente   = pageEnti.find(e => e.id === enteId);
+        buildOrariGrid(grdId, `${ctx}Pers`, ente?.orari_lavoro || null);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  UTILITY
+// ══════════════════════════════════════════════════════════════════════════
+function escapeHtml(s) {
+    return String(s || "")
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function fmt(d) {
+    if (!d) return "";
+    return new Date(d).toLocaleDateString("it-IT", { day:"2-digit", month:"2-digit", year:"numeric" });
+}
+
+function computePhase(inizio, fine) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (today < inizio) return "pre";
+    if (today > fine)   return "post";
+    return "durante";
+}
+
+const phaseLabel = { pre: "Prima dell'inizio", durante: "In corso", post: "Terminato" };
+const phaseClass = { pre: "phase-pre", durante: "phase-durante", post: "phase-post" };
+
+// ══════════════════════════════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════════════════════════════
+function switchTab(tab) {
+    document.getElementById("tabEntiContent").style.display        = tab === "enti"         ? "" : "none";
+    document.getElementById("tabAssegnazioniContent").style.display = tab === "assegnazioni" ? "" : "none";
+    document.getElementById("tabEnti").classList.toggle("active",         tab === "enti");
+    document.getElementById("tabAssegnazioni").classList.toggle("active", tab === "assegnazioni");
+    if (tab === "assegnazioni") loadAssegnazioni();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  DISPONIBILITA CHECK
+// ══════════════════════════════════════════════════════════════════════════
+async function checkDisponibilita(ctx, excludeId) {
+    const enteEl  = document.getElementById(ctx === "new" ? "assignEnte"      : "eaEnte");
+    const inizEl  = document.getElementById(ctx === "new" ? "assignDataInizio" : "eaInizio");
+    const fineEl  = document.getElementById(ctx === "new" ? "assignDataFine"   : "eaFine");
+    const boxEl   = document.getElementById(ctx === "new" ? "newDispBox"       : "eaDispBox");
+    if (!boxEl) return;
+
+    const enteId = parseInt(enteEl?.value);
+    const inizio = inizEl?.value;
+    const fine   = fineEl?.value;
+
+    if (!enteId || !inizio || !fine) { boxEl.innerHTML = ""; return; }
+    if (inizio > fine)               { boxEl.innerHTML = ""; return; }
+
+    boxEl.innerHTML = `<div class="disp-box" style="background:#f8fafc;color:var(--gray-500);border:1px solid var(--gray-200);">
+        Controllo disponibilità...</div>`;
+
+    let url = `/api/enti/${enteId}/disponibilita?data_inizio=${inizio}&data_fine=${fine}`;
+    if (excludeId) url += `&exclude=${excludeId}`;
+
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) { boxEl.innerHTML = ""; return; }
+
+    const { posti_totali, posti_occupati, posti_liberi, disponibile, occupato_fino_a } = data;
+
+    if (posti_totali == null) {
+        boxEl.innerHTML = `<div class="disp-box" style="background:#f0f9ff;color:#0369a1;border:1px solid #7dd3fc;">
+            Nessun limite di posti configurato per questo ente.</div>`;
+        if (ctx === "new") forceCreate = false;
+        return;
+    }
+
+    if (disponibile) {
+        const cls = posti_liberi <= Math.max(1, Math.floor(posti_totali * 0.2)) ? "disp-warn" : "disp-ok";
+        boxEl.innerHTML = `<div class="disp-box ${cls}">
+            Posti disponibili: <strong>${posti_liberi} / ${posti_totali}</strong>
+            &mdash; ${posti_occupati} gia occupat${posti_occupati === 1 ? "o" : "i"} nel periodo
+        </div>`;
+        if (ctx === "new") forceCreate = false;
+    } else {
+        const finoA = occupato_fino_a
+            ? ` L'ente torna disponibile dal <strong>${new Date(occupato_fino_a).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})}</strong>.`
+            : "";
+        boxEl.innerHTML = `<div class="disp-box disp-full">
+            Tutti i ${posti_totali} posti sono occupati nel periodo selezionato.${finoA}
+            <div style="margin-top:0.5rem;">
+                <button onclick="forceProceed()" style="width:auto;padding:0.4rem 1rem;
+                    background:#dc2626;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+                    Continua comunque
+                </button>
+            </div>
+        </div>`;
+        if (ctx === "new") forceCreate = false;
+    }
+}
+
+function forceProceed() {
+    forceCreate = true;
+    const box = document.getElementById("newDispBox");
+    if (box) box.innerHTML = `<div class="disp-box disp-warn">Stai procedendo nonostante l'ente sia al completo.</div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  ENTI
+// ══════════════════════════════════════════════════════════════════════════
+async function loadEnti() {
+    const [eR, aR] = await Promise.all([fetch("/api/enti"), fetch("/api/assignments")]);
+    if (eR.status === 401) { location.href = "login.html"; return; }
+    const eD = await eR.json();
+    const aD = await aR.json();
+
+    pageEnti = eD.enti || [];
+    assignCounts = {};
+    (aD.assignments || []).forEach(a => {
+        assignCounts[a.ente_id] = (assignCounts[a.ente_id] || 0) + 1;
+    });
+    renderEntiGrid(pageEnti);
+}
+
+function postiHtml(ente) {
+    if (ente.posti_disponibili == null) {
+        return `<span class="posti-badge posti-none">posti illimitati</span>`;
+    }
+    const used = assignCounts[ente.id] || 0;
+    const free = ente.posti_disponibili - used;
+    if (free <= 0)
+        return `<span class="posti-badge posti-full">Completo (${ente.posti_disponibili} posti)</span>`;
+    if (free <= Math.max(1, Math.floor(ente.posti_disponibili * 0.2)))
+        return `<span class="posti-badge posti-warn">${free}/${ente.posti_disponibili} posti</span>`;
+    return `<span class="posti-badge posti-ok">${free}/${ente.posti_disponibili} posti liberi</span>`;
+}
+
+function orariSummary(orari) {
+    if (!orari) return "";
+    const attivi = GIORNI.filter(g => orari[g.key] && orari[g.key].attivo);
+    if (!attivi.length) return "";
+    return attivi.map(g => `${g.label.slice(0,3)} ${orari[g.key].inizio}-${orari[g.key].fine}`).join(", ");
+}
+
+function renderEntiGrid(enti) {
+    const grid = document.getElementById("entiGrid");
+    if (!enti.length) {
+        grid.innerHTML = `<div class="empty-placeholder"><div class="ep-icon"><i class="fa fa-building"></i></div><p>Nessun ente. Creane uno usando il form sopra.</p></div>`;
+        return;
+    }
+    grid.innerHTML = "";
+    enti.forEach(e => {
+        const count    = assignCounts[e.id] || 0;
+        const orariTxt = orariSummary(e.orari_lavoro);
+        const card     = document.createElement("div");
+        card.className = "ente-card";
+        card.innerHTML = `
+            <h4><i class="fa fa-building" style="color:#0f766e;margin-right:0.45rem;font-size:0.9em;"></i>${escapeHtml(e.nome)}</h4>
+            <div class="ente-meta">
+                ${e.indirizzo   ? `<div><i class="fa fa-location-dot" style="color:#a8a29e;width:14px;margin-right:0.35rem;"></i>${escapeHtml(e.indirizzo)}</div>`   : ""}
+                ${e.referente   ? `<div><i class="fa fa-user" style="color:#a8a29e;width:14px;margin-right:0.35rem;"></i>${escapeHtml(e.referente)}</div>`   : ""}
+                ${e.descrizione ? `<div><i class="fa fa-file-lines" style="color:#a8a29e;width:14px;margin-right:0.35rem;"></i>${escapeHtml(e.descrizione)}</div>` : ""}
+                ${orariTxt      ? `<div style="font-size:0.8rem;color:#64748b;"><i class="fa fa-clock" style="margin-right:0.35rem;"></i>${escapeHtml(orariTxt)}</div>` : ""}
+            </div>
+            <div style="margin-top:0.75rem;">
+                <span class="ente-stud-count"><i class="fa fa-users" style="margin-right:0.3rem;"></i>${count} studente/i</span>${postiHtml(e)}
+            </div>
+            <div class="ente-actions">
+                <button class="btn-icon" onclick="editEnteModal(${e.id})" title="Modifica"><i class="fa fa-pen"></i> Modifica</button>
+                <button class="btn-delete" onclick="deleteEnte(${e.id})" style="width:auto;padding:0.4rem 0.8rem;" title="Elimina"><i class="fa fa-trash"></i></button>
+            </div>`;
+        grid.appendChild(card);
+    });
+}
+
+async function createEnte() {
+    const nome        = document.getElementById("enteNome").value.trim();
+    const indirizzo   = document.getElementById("enteIndirizzo").value.trim();
+    const referente   = document.getElementById("enteReferente").value.trim();
+    const descrizione = document.getElementById("enteDescrizione").value.trim();
+    const postiVal    = document.getElementById("entePosti").value;
+    const posti       = postiVal !== "" ? parseInt(postiVal) : null;
+    const orari       = readOrariGrid("newOrari");
+    const msg         = document.getElementById("createEnteMsg");
+
+    if (!nome) { msg.innerHTML = '<div class="error">Il nome e obbligatorio</div>'; return; }
+    const res  = await fetch("/api/enti", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ nome, indirizzo, referente, descrizione,
+                               posti_disponibili: posti, orari_lavoro: orari })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        msg.innerHTML = `<div class="success">${data.message}</div>`;
+        ["enteNome","enteIndirizzo","enteReferente","enteDescrizione","entePosti"].forEach(id =>
+            document.getElementById(id).value = "");
+        buildOrariGrid("newOrariGrid", "newOrari", null);
+        loadEnti();
+    } else {
+        msg.innerHTML = `<div class="error">${data.error}</div>`;
+    }
+}
+
+async function deleteEnte(enteId) {
+    if (!confirm("Eliminare questo ente? Verranno rimosse anche tutte le assegnazioni collegate.")) return;
+    const res  = await fetch(`/api/enti/${enteId}`, { method: "DELETE" });
+    const data = await res.json();
+    if (res.ok) loadEnti();
+    else alert(data.error);
+}
+
+function editEnteModal(enteId) {
+    const ente = pageEnti.find(e => e.id === enteId);
+    if (!ente) return;
+
+    const modal = document.createElement("div");
+    modal.className = "modal-overlay";
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,0.6);display:flex;justify-content:center;align-items:flex-start;padding:2rem 1rem;z-index:10000;overflow-y:auto;backdrop-filter:blur(4px);";
+    modal.innerHTML = `
+        <div style="background:white;border-radius:24px;padding:2rem;max-width:560px;width:100%;position:relative;box-shadow:0 20px 40px rgba(0,0,0,0.15);margin:auto;">
+            <span onclick="this.closest('.modal-overlay').remove()" style="position:absolute;top:1rem;right:1.25rem;font-size:2rem;cursor:pointer;color:#64748b;line-height:1;">&times;</span>
+            <h3 style="margin-bottom:1.25rem;">Modifica ente</h3>
+            <input id="editNome"        type="text"   value="${escapeHtml(ente.nome)}"            placeholder="Nome *">
+            <input id="editIndirizzo"   type="text"   value="${escapeHtml(ente.indirizzo||'')}"   placeholder="Indirizzo">
+            <input id="editReferente"   type="text"   value="${escapeHtml(ente.referente||'')}"   placeholder="Referente">
+            <input id="editDescrizione" type="text"   value="${escapeHtml(ente.descrizione||'')}" placeholder="Descrizione">
+            <input id="editPosti"       type="number" value="${ente.posti_disponibili != null ? ente.posti_disponibili : ''}"
+                   min="0" placeholder="Posti disponibili (vuoto = illimitati)">
+            <div class="orari-section" style="margin-top:0.5rem;">
+                <h5>Orari lavorativi</h5>
+                <div id="editOrariGrid"></div>
+            </div>
+            <div id="editEnteMsg"></div>
+            <button onclick="saveEnte(${enteId},this.closest('.modal-overlay'))" style="margin-top:0.75rem;">Salva modifiche</button>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+    buildOrariGrid("editOrariGrid", "editOrari", ente.orari_lavoro || null);
+}
+
+async function saveEnte(enteId, modalEl) {
+    const nome        = document.getElementById("editNome").value.trim();
+    const indirizzo   = document.getElementById("editIndirizzo").value.trim();
+    const referente   = document.getElementById("editReferente").value.trim();
+    const descrizione = document.getElementById("editDescrizione").value.trim();
+    const postiVal    = document.getElementById("editPosti").value;
+    const posti       = postiVal !== "" ? parseInt(postiVal) : null;
+    const orari       = readOrariGrid("editOrari");
+    const msg         = document.getElementById("editEnteMsg");
+    if (!nome) { msg.innerHTML = '<div class="error">Il nome e obbligatorio</div>'; return; }
+    const res  = await fetch(`/api/enti/${enteId}`, {
+        method: "PUT", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ nome, indirizzo, referente, descrizione,
+                               posti_disponibili: posti, orari_lavoro: orari })
+    });
+    const data = await res.json();
+    if (res.ok) { modalEl?.remove(); loadEnti(); }
+    else { msg.innerHTML = `<div class="error">${data.error}</div>`; }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  PREFERENZE STUDENTE
+// ══════════════════════════════════════════════════════════════════════════
+async function loadStudentPreferences() {
+    const userId = document.getElementById("assignUser").value;
+    const box    = document.getElementById("studentPrefBox");
+    if (!userId) { box.style.display = "none"; return; }
+
+    try {
+        const res  = await fetch(`/api/admin/users/${userId}/preferences`);
+        if (!res.ok) { box.style.display = "none"; return; }
+        const data  = await res.json();
+        const prefs = data.preferences || [];
+        if (!prefs.length) { box.style.display = "none"; return; }
+
+        box.innerHTML =
+            '<div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#166534;margin-bottom:0.45rem;">Preferenze espresse dallo studente</div>' +
+            prefs.map(p =>
+                `<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;">
+                    <span style="background:#16a34a;color:white;border-radius:50%;width:20px;height:20px;min-width:20px;display:inline-flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:800;">${p.ordine}</span>
+                    <span style="font-size:0.85rem;font-weight:600;color:#14532d;flex:1;">${escapeHtml(p.ente_nome)}</span>
+                    <button onclick="document.getElementById('assignEnte').value='${p.ente_id}';checkDisponibilita('new');"
+                        style="font-size:0.72rem;padding:0.18rem 0.6rem;background:transparent;border:1px solid #16a34a;color:#16a34a;border-radius:5px;cursor:pointer;width:auto;box-shadow:none;font-weight:700;font-family:inherit;">
+                        Usa
+                    </button>
+                </div>`
+            ).join('');
+        box.style.display = "block";
+    } catch {
+        box.style.display = "none";
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  ASSEGNAZIONI
+// ══════════════════════════════════════════════════════════════════════════
+async function loadAssegnazioni() {
+    const [uR, eR, aR] = await Promise.all([
+        fetch("/api/admin/users"),
+        fetch("/api/enti"),
+        fetch("/api/assignments"),
+    ]);
+    const uD = await uR.json();
+    const eD = await eR.json();
+    const aD = await aR.json();
+
+    pageStudents    = (uD.users || []).filter(u => u.ruolo === "USER");
+    pageEnti        = eD.enti || [];
+    pageAssignments = aD.assignments || [];
+
+    populateSelects();
+    renderAssignmentsTable(pageAssignments);
+}
+
+function populateSelects() {
+    const uSel = document.getElementById("assignUser");
+    const eSel = document.getElementById("assignEnte");
+    if (uSel) {
+        uSel.innerHTML = `<option value="">-- Seleziona studente --</option>` +
+            pageStudents.map(s => `<option value="${s.id}">${escapeHtml(s.email)}</option>`).join("");
+    }
+    if (eSel) {
+        eSel.innerHTML = `<option value="">-- Seleziona ente --</option>` +
+            pageEnti.map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join("");
+    }
+}
+
+function renderAssignmentsTable(assignments) {
+    const tbody = document.getElementById("assignmentsBody");
+    if (!assignments.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--gray-600);padding:2rem;">Nessuna assegnazione.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = "";
+    assignments.forEach(a => {
+        const phase = computePhase(a.data_inizio, a.data_fine);
+        const hasOrari = a.orari_personalizzati ? '<i class="fa fa-clock" title="Orari personalizzati" style="color:#0f766e;margin-left:0.25rem;"></i>' : "";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${escapeHtml(a.student_email)}</td>
+            <td>${escapeHtml(a.ente_nome)}</td>
+            <td>${fmt(a.data_inizio)}</td>
+            <td>${fmt(a.data_fine)}</td>
+            <td><span class="badge ${phaseClass[phase]}">${phaseLabel[phase]}</span></td>
+            <td>${escapeHtml(a.note || "")} ${hasOrari}</td>
+            <td>
+                <button class="btn-icon" onclick="editAssignmentModal(${a.id})" title="Modifica"><i class="fa fa-pen"></i></button>
+                <button class="btn-delete" onclick="deleteAssignment(${a.id})" style="width:auto;padding:0.35rem 0.7rem;margin-left:0.3rem;" title="Elimina"><i class="fa fa-trash"></i></button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function filterAssignments() {
+    const fs = (document.getElementById("filterAssignStud").value || "").toLowerCase();
+    const fe = (document.getElementById("filterAssignEnte").value || "").toLowerCase();
+    const fp = document.getElementById("filterAssignPhase").value;
+    renderAssignmentsTable(pageAssignments.filter(a => {
+        const phase = computePhase(a.data_inizio, a.data_fine);
+        return (a.student_email||"").toLowerCase().includes(fs) &&
+               (a.ente_nome||"").toLowerCase().includes(fe) &&
+               (!fp || phase === fp);
+    }));
+}
+
+function clearAssignFilters() {
+    ["filterAssignStud","filterAssignEnte"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("filterAssignPhase").value = "";
+    renderAssignmentsTable(pageAssignments);
+}
+
+async function createAssignment() {
+    const user_id     = document.getElementById("assignUser").value;
+    const ente_id     = document.getElementById("assignEnte").value;
+    const data_inizio = document.getElementById("assignDataInizio").value;
+    const data_fine   = document.getElementById("assignDataFine").value;
+    const note        = document.getElementById("assignNote").value.trim();
+    const msg         = document.getElementById("createAssignMsg");
+
+    if (!user_id || !ente_id || !data_inizio || !data_fine) {
+        msg.innerHTML = '<div class="error">Studente, ente, data inizio e data fine sono obbligatori</div>'; return;
+    }
+
+    // Blocca se posti_disponibili esauriti (a meno di forceCreate)
+    const ente = pageEnti.find(e => e.id === parseInt(ente_id));
+    if (ente && ente.posti_disponibili != null && !forceCreate) {
+        const dispRes  = await fetch(`/api/enti/${ente_id}/disponibilita?data_inizio=${data_inizio}&data_fine=${data_fine}`);
+        const dispData = await dispRes.json();
+        if (!dispData.disponibile) {
+            msg.innerHTML = `<div class="error">Ente al completo. Clicca "Continua comunque" nel box disponibilita per procedere.</div>`;
+            return;
+        }
+    }
+
+    const orariCb   = document.getElementById("newOrariToggle");
+    const orariPers = orariCb && orariCb.checked ? readOrariGrid("newPers") : null;
+
+    const res  = await fetch("/api/assignments", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ user_id: parseInt(user_id), ente_id: parseInt(ente_id),
+                               data_inizio, data_fine, note, orari_personalizzati: orariPers })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        msg.innerHTML = `<div class="success">${data.message}</div>`;
+        ["assignUser","assignEnte","assignDataInizio","assignDataFine","assignNote"].forEach(id => {
+            const el = document.getElementById(id); if (el) el.value = "";
+        });
+        const tog = document.getElementById("newOrariToggle");
+        const pd  = document.getElementById("newOrariPersonalizzati");
+        if (tog) tog.checked = false;
+        if (pd)  pd.style.display = "none";
+        document.getElementById("newDispBox").innerHTML = "";
+        forceCreate = false;
+        loadAssegnazioni();
+    } else {
+        msg.innerHTML = `<div class="error">${data.error}</div>`;
+    }
+}
+
+function editAssignmentModal(assignId) {
+    const a = pageAssignments.find(x => x.id === assignId);
+    if (!a) return;
+
+    const enteOptions = pageEnti.map(e =>
+        `<option value="${e.id}" ${e.id === a.ente_id ? "selected" : ""}>${escapeHtml(e.nome)}</option>`
+    ).join("");
+
+    const hasOrariPers = !!a.orari_personalizzati;
+
+    const modal = document.createElement("div");
+    modal.className = "modal-overlay";
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,0.6);display:flex;justify-content:center;align-items:flex-start;padding:2rem 1rem;z-index:10000;overflow-y:auto;backdrop-filter:blur(4px);";
+    modal.innerHTML = `
+        <div style="background:white;border-radius:24px;padding:2rem;max-width:560px;width:100%;position:relative;box-shadow:0 20px 40px rgba(0,0,0,0.15);margin:auto;">
+            <span onclick="this.closest('.modal-overlay').remove()" style="position:absolute;top:1rem;right:1.25rem;font-size:2rem;cursor:pointer;color:#64748b;line-height:1;">&times;</span>
+            <h3 style="margin-bottom:1rem;">Modifica assegnazione</h3>
+            <p style="color:var(--gray-600);margin-bottom:1.25rem;">Studente: <strong>${escapeHtml(a.student_email)}</strong></p>
+            <label style="font-size:0.85rem;font-weight:600;color:#64748b;">Ente *</label>
+            <select id="eaEnte" onchange="checkDisponibilita('ea', ${assignId})" style="margin-top:0.25rem;">${enteOptions}</select>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;">
+                <div>
+                    <label style="font-size:0.85rem;font-weight:600;color:#64748b;">Data inizio *</label>
+                    <input id="eaInizio" type="date" value="${a.data_inizio}"
+                           onchange="checkDisponibilita('ea', ${assignId})" style="margin-top:0.25rem;margin-bottom:0;">
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;font-weight:600;color:#64748b;">Data fine *</label>
+                    <input id="eaFine" type="date" value="${a.data_fine}"
+                           onchange="checkDisponibilita('ea', ${assignId})" style="margin-top:0.25rem;margin-bottom:0;">
+                </div>
+            </div>
+            <div id="eaDispBox"></div>
+            <input id="eaNote" type="text" value="${escapeHtml(a.note||'')}" placeholder="Note" style="margin-top:0.75rem;">
+
+            <label class="toggle-label" style="margin-top:0.75rem;">
+                <input type="checkbox" id="eaOrariToggle" ${hasOrariPers ? "checked" : ""}
+                       onchange="toggleOrariPersonalizzati('ea')">
+                Orari personalizzati per questo studente
+            </label>
+            <div id="eaOrariPersonalizzati" style="${hasOrariPers ? "" : "display:none;"}margin-top:0.75rem;">
+                <div class="orari-section">
+                    <h5>Orari personalizzati</h5>
+                    <div id="eaOrariPersGrid"></div>
+                </div>
+            </div>
+
+            <div id="eaMsg"></div>
+            <button onclick="saveAssignment(${assignId},this.closest('.modal-overlay'))" style="margin-top:0.75rem;">Salva</button>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+
+    const ente   = pageEnti.find(e => e.id === a.ente_id);
+    const defs   = a.orari_personalizzati || ente?.orari_lavoro || null;
+    buildOrariGrid("eaOrariPersGrid", "eaPers", defs);
+    checkDisponibilita("ea", assignId);
+}
+
+async function saveAssignment(assignId, modalEl) {
+    const ente_id     = parseInt(document.getElementById("eaEnte").value);
+    const data_inizio = document.getElementById("eaInizio").value;
+    const data_fine   = document.getElementById("eaFine").value;
+    const note        = document.getElementById("eaNote").value.trim();
+    const msg         = document.getElementById("eaMsg");
+    if (!ente_id || !data_inizio || !data_fine) {
+        msg.innerHTML = '<div class="error">Tutti i campi obbligatori</div>'; return;
+    }
+
+    const orariCb   = document.getElementById("eaOrariToggle");
+    const orariPers = orariCb && orariCb.checked ? readOrariGrid("eaPers") : null;
+
+    const res  = await fetch(`/api/assignments/${assignId}`, {
+        method: "PUT", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ ente_id, data_inizio, data_fine, note, orari_personalizzati: orariPers })
+    });
+    const data = await res.json();
+    if (res.ok) { modalEl?.remove(); loadAssegnazioni(); }
+    else { msg.innerHTML = `<div class="error">${data.error}</div>`; }
+}
+
+async function deleteAssignment(assignId) {
+    if (!confirm("Eliminare questa assegnazione?")) return;
+    const res  = await fetch(`/api/assignments/${assignId}`, { method: "DELETE" });
+    const data = await res.json();
+    if (res.ok) loadAssegnazioni();
+    else alert(data.error);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  INIT
+// ========================================================================
+//  INIT
+// ========================================================================
+window.onload = () => {
+    if (typeof setupDropdown === 'function') setupDropdown();
+    buildOrariGrid("newOrariGrid", "newOrari", null);
+    loadEnti();
+    loadAssegnazioni();
+};
+
+</script>
+</body>
+</html>

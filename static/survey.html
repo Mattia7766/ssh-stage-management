@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valutazione Esperienza Formativa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:          #f4f2ee;
+  --card:        #ffffff;
+  --ink:         #1c1917;
+  --ink-2:       #44403c;
+  --ink-3:       #78716c;
+  --ink-4:       #a8a29e;
+  --accent:      #0f766e;
+  --accent-lt:   #ccfbf1;
+  --accent-glow: rgba(15,118,110,0.15);
+  --red:         #dc2626;
+  --red-lt:      #fee2e2;
+  --border:      #e7e5e4;
+  --shadow-lg:   0 2px 8px rgba(28,25,23,.08), 0 16px 40px rgba(28,25,23,.10);
+  --r-sm:        10px;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1rem 4rem;
+}
+body::before {
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23000' fill-opacity='0.018'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.outer { position:relative; z-index:1; width:100%; max-width:640px; }
+
+/* ── HEADER ── */
+.site-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; }
+.logo { font-family:'Playfair Display',serif; font-size:1.25rem; color:var(--ink); }
+.logo em { color:var(--accent); font-style:normal; }
+.btn-ghost {
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:.78rem; font-weight:600;
+  color:var(--ink-3); background:transparent; border:1.5px solid var(--border);
+  border-radius:40px; padding:.4rem 1rem; cursor:pointer; transition:all .2s;
+  width:auto; box-shadow:none;
+}
+.btn-ghost:hover { border-color:var(--red); color:var(--red); background:var(--red-lt); transform:none; filter:none; box-shadow:none; }
+
+/* ── CARD ── */
+.card { background:var(--card); border-radius:24px; box-shadow:var(--shadow-lg); border:1px solid var(--border); overflow:hidden; }
+
+/* ── RIBBON ── */
+.section-ribbon { height:5px; transition:background .5s; }
+
+/* ── DOTS ── */
+.dots-row { display:flex; align-items:center; gap:.3rem; padding:1.25rem 2rem 0; }
+.dot { width:7px; height:7px; border-radius:50%; background:var(--border); transition:all .3s; flex-shrink:0; }
+.dot.done { background:var(--accent); opacity:.4; }
+.dot.cur  { background:var(--accent); width:20px; border-radius:3px; }
+.dots-num { margin-left:auto; font-size:.73rem; font-weight:600; color:var(--ink-4); }
+
+/* ── SECTION TAG ── */
+.section-tag { display:flex; align-items:center; gap:.5rem; padding:1.2rem 2rem .1rem; }
+.tag-icon  { width:30px; height:30px; border-radius:8px; display:grid; place-items:center; font-size:.95rem; flex-shrink:0; }
+.tag-label { font-size:.7rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+
+/* ── QUESTION BODY ── */
+.q-body { padding:1rem 2rem 1.75rem; }
+.q-text { font-family:'Playfair Display',serif; font-size:1.4rem; line-height:1.38; color:var(--ink); margin-bottom:1.5rem; }
+
+/* ── OPTIONS ── */
+.opt-list { display:flex; flex-direction:column; gap:.55rem; }
+.opt {
+  display:flex; align-items:center; gap:.9rem;
+  padding:.85rem 1.1rem; border:1.5px solid var(--border); border-radius:var(--r-sm);
+  cursor:pointer; user-select:none; font-size:.9rem; font-weight:500;
+  color:var(--ink-2); background:var(--bg);
+  transition:border-color .15s, background .15s, color .15s, transform .12s;
+}
+.opt:hover { border-color:var(--accent); color:var(--ink); background:var(--accent-lt); transform:translateX(2px); }
+.opt.sel   { border-color:var(--accent); background:var(--accent-lt); color:var(--ink); }
+.opt-circle {
+  width:18px; height:18px; border-radius:50%; border:2px solid var(--border);
+  flex-shrink:0; display:grid; place-items:center; transition:border-color .15s, background .15s;
+}
+.opt.sel .opt-circle { border-color:var(--accent); background:var(--accent); }
+.opt-circle::after { content:''; width:6px; height:6px; background:white; border-radius:50%; opacity:0; transition:opacity .12s; }
+.opt.sel .opt-circle::after { opacity:1; }
+.opt.chk .opt-circle { border-radius:5px; }
+.opt.chk.sel .opt-circle::after {
+  width:9px; height:5px; border-radius:0; background:transparent;
+  border-left:2px solid white; border-bottom:2px solid white;
+  transform:rotate(-45deg) translateY(-1px);
+}
+
+/* ── SCALE ── */
+.scale-wrap { display:flex; flex-direction:column; gap:.5rem; }
+.scale-nums { display:flex; gap:.4rem; flex-wrap:wrap; }
+.scale-btn {
+  flex:1; min-width:36px; padding:.65rem .25rem;
+  border:1.5px solid var(--border); border-radius:var(--r-sm); background:var(--bg);
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:.88rem; font-weight:700;
+  color:var(--ink-3); cursor:pointer; transition:all .15s; text-align:center;
+  box-shadow:none; width:auto;
+}
+.scale-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-lt); transform:none; filter:none; box-shadow:none; }
+.scale-btn.sel   { background:var(--accent); border-color:var(--accent); color:white; }
+.scale-labels { display:flex; justify-content:space-between; font-size:.72rem; color:var(--ink-4); font-weight:500; }
+
+/* ── TEXTAREA ── */
+.q-textarea {
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:.9rem; width:100%;
+  border:1.5px solid var(--border); border-radius:var(--r-sm);
+  padding:.9rem 1rem; resize:vertical; min-height:110px;
+  color:var(--ink); background:var(--bg); outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+.q-textarea:focus { border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-glow); }
+.char-count { text-align:right; font-size:.72rem; color:var(--ink-4); margin-top:.3rem; }
+
+/* ── HINT ── */
+.hint { font-size:.78rem; color:var(--red); font-weight:600; margin-top:.75rem; display:none; }
+.hint.show { display:block; }
+
+/* ── NAV BAR ── */
+.nav-bar { display:flex; justify-content:space-between; align-items:center; padding:1.25rem 2rem 1.5rem; border-top:1px solid var(--border); }
+.btn-back {
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:.85rem; font-weight:600;
+  color:var(--ink-3); background:transparent; border:1.5px solid var(--border);
+  border-radius:40px; padding:.6rem 1.35rem; cursor:pointer; transition:all .2s;
+  width:auto; box-shadow:none;
+}
+.btn-back:hover { border-color:var(--ink-2); color:var(--ink); transform:none; filter:none; box-shadow:none; }
+.btn-back:disabled { opacity:.3; pointer-events:none; }
+.btn-next {
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:.85rem; font-weight:700;
+  color:white; background:var(--accent); border:none; border-radius:40px;
+  padding:.65rem 1.75rem; cursor:pointer; transition:all .2s;
+  box-shadow:0 4px 14px var(--accent-glow); width:auto;
+}
+.btn-next:hover { background:#0d6560; transform:translateY(-1px); box-shadow:0 6px 20px rgba(15,118,110,.3); filter:none; }
+.btn-next:disabled { opacity:.3; pointer-events:none; transform:none; }
+
+/* ── STATUS SCREENS ── */
+.status-screen { padding:3.5rem 2rem 3rem; display:flex; flex-direction:column; align-items:center; text-align:center; gap:.9rem; }
+.s-icon  { font-size:3.5rem; line-height:1; }
+.s-title { font-family:'Playfair Display',serif; font-size:1.7rem; color:var(--ink); }
+.s-body  { font-size:.92rem; color:var(--ink-2); line-height:1.7; max-width:380px; }
+.s-chip  { background:var(--accent-lt); color:var(--accent); border-radius:40px; padding:.5rem 1.2rem; font-size:.8rem; font-weight:700; display:inline-flex; align-items:center; gap:.4rem; }
+.s-chip.red { background:var(--red-lt); color:var(--red); }
+.stage-detail { font-size:.85rem; color:var(--ink-3); line-height:1.9; text-align:left; background:var(--bg); border-radius:var(--r-sm); padding:1rem 1.25rem; border:1px solid var(--border); width:100%; max-width:360px; }
+#surveySuccessArea .s-icon { animation:pop .55s cubic-bezier(.175,.885,.32,1.275); }
+@keyframes pop { 0%{transform:scale(0)} 80%{transform:scale(1.18)} 100%{transform:scale(1)} }
+
+/* ── SLIDE ANIM ── */
+@keyframes slideInR { from{opacity:0;transform:translateX(28px)} to{opacity:1;transform:translateX(0)} }
+@keyframes slideInL { from{opacity:0;transform:translateX(-28px)} to{opacity:1;transform:translateX(0)} }
+.slide-r { animation:slideInR .26s cubic-bezier(.4,0,.2,1); }
+.slide-l { animation:slideInL .26s cubic-bezier(.4,0,.2,1); }
+
+/* ── STUDENT INFO FORM ── */
+.info-form { display:flex; flex-direction:column; gap:.9rem; }
+.info-field { display:flex; flex-direction:column; gap:.35rem; }
+.info-field label { font-size:.72rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-3); }
+.info-input, .info-select {
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:.92rem; font-weight:500;
+  color:var(--ink); background:var(--bg);
+  border:1.5px solid var(--border); border-radius:var(--r-sm);
+  padding:.75rem .9rem; outline:none;
+  transition:border-color .2s, box-shadow .2s;
+  width:100%;
+}
+.info-input:focus, .info-select:focus { border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-glow); }
+.info-input::placeholder { color:var(--ink-4); }
+.info-row { display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
+
+/* ── SOFT SKILLS RADAR ── */
+.radar-wrap { display:flex; flex-direction:column; align-items:center; gap:1.5rem; }
+.radar-hint {
+  font-size:.82rem; color:var(--ink-3); font-weight:500; text-align:center;
+  background:var(--bg); border-radius:var(--r-sm); padding:.55rem 1rem; border:1px solid var(--border);
+}
+.radar-canvas-wrap { position:relative; width:280px; height:280px; }
+.skill-sliders { width:100%; display:flex; flex-direction:column; gap:.7rem; }
+.skill-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:.75rem; }
+.skill-info { display:flex; flex-direction:column; gap:.15rem; }
+.skill-name { font-size:.82rem; font-weight:700; color:var(--ink-2); display:flex; align-items:center; gap:.4rem; }
+.skill-name .sk-icon { font-size:.9rem; }
+.skill-bar-track { height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-top:.2rem; }
+.skill-bar-fill { height:100%; border-radius:3px; transition:width .3s cubic-bezier(.4,0,.2,1); }
+.star-row { display:flex; gap:.3rem; }
+.star { font-size:1.3rem; cursor:pointer; line-height:1; transition:transform .15s; filter:grayscale(1) opacity(.35); }
+.star:hover, .star.lit { filter:none; transform:scale(1.15); }
+.star:hover { transform:scale(1.2); }
+
+/* ── LOADING ── */
+.loading-box { padding:3rem 2rem; display:flex; flex-direction:column; align-items:center; gap:1rem; }
+.spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── PREFERENZE ENTI ── */
+.pref-section {
+  padding:1.5rem 2rem 2rem;
+  border-top:1px solid var(--border);
+}
+.pref-section h3 {
+  font-family:'Playfair Display',serif; font-size:1.15rem;
+  color:var(--ink); margin-bottom:.3rem;
+}
+.pref-section .pref-subtitle {
+  font-size:.85rem; color:var(--ink-3); line-height:1.65; margin-bottom:1.25rem;
+}
+.pref-row {
+  display:flex; align-items:center; gap:.75rem; margin-bottom:.6rem;
+}
+.pref-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:28px; height:28px; border-radius:50%;
+  background:var(--accent); color:white;
+  font-size:.72rem; font-weight:800; flex-shrink:0;
+}
+.pref-badge.two  { opacity:.75; }
+.pref-badge.three { opacity:.5; }
+.pref-select {
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:.9rem; font-weight:500;
+  color:var(--ink); background:var(--bg);
+  border:1.5px solid var(--border); border-radius:var(--r-sm);
+  padding:.65rem .9rem; outline:none; flex:1;
+  transition:border-color .2s, box-shadow .2s;
+}
+.pref-select:focus { border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-glow); }
+.btn-pref-save {
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:.87rem; font-weight:700;
+  color:white; background:var(--accent); border:none; border-radius:40px;
+  padding:.7rem 1.75rem; cursor:pointer; transition:all .2s;
+  box-shadow:0 4px 14px var(--accent-glow); width:100%; margin-top:.5rem;
+}
+.btn-pref-save:hover { background:#0d6560; transform:translateY(-1px); box-shadow:0 6px 20px rgba(15,118,110,.3); }
+.pref-msg { margin-top:.6rem; font-size:.84rem; text-align:center; min-height:1.2em; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:520px){
+  body { padding:1.25rem .75rem 3rem; }
+  .q-body { padding:.75rem 1.25rem 1.5rem; }
+  .section-tag { padding:1rem 1.25rem .1rem; }
+  .nav-bar { padding:1rem 1.25rem 1.25rem; }
+  .dots-row { padding:1rem 1.25rem 0; }
+  .q-text { font-size:1.2rem; }
+  .scale-btn { padding:.5rem .2rem; font-size:.8rem; }
+  .info-row { grid-template-columns:1fr; }
+  .radar-canvas-wrap { width:240px; height:240px; }
+  .pref-section { padding:1.25rem 1.25rem 1.75rem; }
+}
+</style>
+</head>
+<body>
+<div class="outer">
+
+  <div class="site-header">
+    <div class="logo">Stage<em>·</em>Review</div>
+    <button class="btn-ghost" onclick="doLogout()">&#8592; Esci</button>
+  </div>
+
+  <div class="card">
+
+    <!-- CARICAMENTO -->
+    <div id="loadingArea">
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <p style="font-size:.85rem;color:var(--ink-3);">Caricamento in corso&hellip;</p>
+      </div>
+    </div>
+
+    <!-- STAGE NON INIZIATO / IN CORSO -->
+    <div id="surveyStageArea" style="display:none">
+      <div class="status-screen">
+        <div class="s-icon" id="stageStatusIcon">📅</div>
+        <div class="s-title" id="stageStatusTitle"></div>
+        <div class="s-body"  id="stageStatusBody"></div>
+        <div class="stage-detail" id="stageDetail" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- PREFERENZE ENTI (studente senza assegnazione) -->
+    <div id="surveyPrefArea" style="display:none">
+      <div class="pref-section">
+        <h3>Esprimi le tue preferenze</h3>
+        <p class="pref-subtitle">Indica in ordine di priorità i 3 enti dove vorresti svolgere lo stage. L'admin terrà conto delle tue scelte durante l'assegnazione.</p>
+        <div class="pref-row">
+          <span class="pref-badge">1</span>
+          <select id="prefSelect1" class="pref-select">
+            <option value="">1ª preferenza...</option>
+          </select>
+        </div>
+        <div class="pref-row">
+          <span class="pref-badge two">2</span>
+          <select id="prefSelect2" class="pref-select">
+            <option value="">2ª preferenza (opzionale)...</option>
+          </select>
+        </div>
+        <div class="pref-row">
+          <span class="pref-badge three">3</span>
+          <select id="prefSelect3" class="pref-select">
+            <option value="">3ª preferenza (opzionale)...</option>
+          </select>
+        </div>
+        <button class="btn-pref-save" onclick="savePreferences()">Salva preferenze</button>
+        <div id="prefMessage" class="pref-msg"></div>
+      </div>
+    </div>
+
+    <!-- QUESTIONARIO ATTIVO -->
+    <div id="surveyActiveArea" style="display:none">
+      <div class="section-ribbon" id="sectionRibbon"></div>
+      <div class="dots-row"       id="dotsRow"></div>
+      <div class="section-tag"    id="sectionTag"></div>
+      <div class="q-body"         id="qBody"></div>
+      <div class="nav-bar">
+        <button class="btn-back" id="btnBack" onclick="goBack()">&#8592; Indietro</button>
+        <button class="btn-next" id="btnNext" onclick="goNext()">Avanti &#8594;</button>
+      </div>
+    </div>
+
+    <!-- GIA COMPILATO -->
+    <div id="surveyBlockedArea" style="display:none">
+      <div class="status-screen">
+        <div class="s-icon">&#x2705;</div>
+        <div class="s-title">Già compilato</div>
+        <div class="s-body">Hai già inviato le tue risposte per questa sessione. Grazie per la partecipazione!</div>
+        <div class="s-chip red">&#x1F512; Contatta un amministratore per ricompilare</div>
+        <div id="submissionHistoryBox" style="font-size:.82rem;color:var(--ink-4);margin-top:.5rem"></div>
+      </div>
+    </div>
+
+    <!-- SUCCESSO -->
+    <div id="surveySuccessArea" style="display:none">
+      <div class="status-screen">
+        <div class="s-icon">&#x1F389;</div>
+        <div class="s-title">Grazie mille!</div>
+        <div class="s-body">Le tue risposte sono state registrate. Il tuo feedback è prezioso per migliorare l'esperienza formativa.</div>
+        <div class="s-chip">&#x2713; Questionario completato</div>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+</div><!-- /outer -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   SEZIONI
+═══════════════════════════════════════════════════════════ */
+const SECTIONS = {
+  studente:    { label:'Dati studente',  icon:'👤', color:'#64748b' },
+  formazione:  { label:'Formazione',     icon:'📚', color:'#7c3aed' },
+  tutoraggio:  { label:'Tutoraggio',     icon:'🤝', color:'#b45309' },
+  ambiente:    { label:'Ambiente',       icon:'🌱', color:'#0369a1' },
+  prospettive: { label:'Prospettive',    icon:'🚀', color:'#be185d' },
+};
+
+/* ═══════════════════════════════════════════════════════════
+   SOFT SKILLS
+═══════════════════════════════════════════════════════════ */
+const SOFT_SKILLS = [
+  { id:'comunicazione',    label:'Comunicazione',      icon:'💬', color:'#0f766e' },
+  { id:'lavoro_squadra',   label:'Lavoro di squadra',  icon:'🤝', color:'#7c3aed' },
+  { id:'problem_solving',  label:'Problem solving',    icon:'🧩', color:'#b45309' },
+  { id:'gestione_tempo',   label:'Gestione del tempo', icon:'⏱️', color:'#0369a1' },
+  { id:'adattabilita',     label:'Adattabilità',       icon:'🔄', color:'#be185d' },
+  { id:'iniziativa',       label:'Iniziativa',         icon:'⚡', color:'#d97706' },
+  { id:'pensiero_critico', label:'Pensiero critico',   icon:'🔍', color:'#059669' },
+  { id:'leadership',       label:'Leadership',         icon:'🏅', color:'#dc2626' },
+];
+
+/* ═══════════════════════════════════════════════════════════
+   DOMANDE
+═══════════════════════════════════════════════════════════ */
+const QUESTIONS = [
+  { id:'__studente__', section:'studente', type:'studente', required:true,
+    text:'Prima di iniziare, inserisci i tuoi dati' },
+
+  { id:'chiarezza_obiettivi', section:'formazione', type:'scale', required:true,
+    text:'Gli obiettivi del percorso ti sono stati comunicati in modo chiaro fin dall\'inizio?',
+    min:1, max:10, labels:['Per niente chiaro','Molto chiaro'] },
+
+  { id:'tipo_attivita', section:'formazione', type:'checkbox', required:true,
+    text:'Che tipo di attività hai svolto principalmente durante lo stage?',
+    options:['Affiancamento a colleghi senior','Progetti reali / attività pratiche','Ricerca e studio autonomo','Formazione in aula o webinar','Attività amministrative o di supporto'] },
+
+  { id:'qualita_formazione', section:'formazione', type:'scale', required:true,
+    text:'Come valuti la qualità complessiva della formazione ricevuta?',
+    min:1, max:10, labels:['Molto scarsa','Eccellente'] },
+
+  { id:'applicazione_pratica', section:'formazione', type:'scale', required:true,
+    text:'Quanto hai potuto mettere in pratica le competenze acquisite?',
+    min:1, max:10, labels:['Per niente','Moltissimo'] },
+
+  { id:'supporto_tutor', section:'tutoraggio', type:'scale', required:true,
+    text:'Quanto è stato utile e presente il tuo tutor / referente aziendale?',
+    min:1, max:10, labels:['Non disponibile','Sempre presente'] },
+
+  { id:'feedback_ricevuto', section:'tutoraggio', type:'radio', required:true,
+    text:'Hai ricevuto feedback regolari sull\'andamento del tuo lavoro?',
+    options:['Sì, feedback frequenti e costruttivi','Sì, ma raramente','Solo alla fine del percorso','No, nessun feedback'] },
+
+  { id:'comunicazione_team', section:'tutoraggio', type:'scale', required:true,
+    text:'Come valuti la comunicazione con il team e con i colleghi?',
+    min:1, max:10, labels:['Molto difficile','Ottima'] },
+
+  { id:'clima_aziendale', section:'ambiente', type:'radio', required:true,
+    text:'Come descrivi il clima e l\'ambiente di lavoro?',
+    options:['Molto positivo e collaborativo','Nella norma, professionale','Formale e poco inclusivo','Stressante o poco accogliente'] },
+
+  { id:'benessere', section:'ambiente', type:'scale', required:true,
+    text:'Quanto ti sei sentito/a a tuo agio e supportato/a durante il percorso?',
+    min:1, max:10, labels:['Per niente','Completamente'] },
+
+  { id:'soft_skills', section:'ambiente', type:'softskills', required:true,
+    text:'Valuta le soft skills che hai migliorato durante questa esperienza' },
+
+  { id:'crescita_professionale', section:'prospettive', type:'scale', required:true,
+    text:'Quanto questa esperienza ha contribuito alla tua crescita professionale?',
+    min:1, max:10, labels:['Per niente','Moltissimo'] },
+
+  { id:'proseguimento', section:'prospettive', type:'radio', required:true,
+    text:'Vorresti proseguire la collaborazione con questa azienda in futuro?',
+    options:['Sì, assolutamente','Forse, dipende dall\'opportunità','Non sono sicuro/a','No'] },
+
+  { id:'raccomandazione', section:'prospettive', type:'scale', required:true,
+    text:'Con che probabilità consiglieresti questo stage a un amico o collega?',
+    min:0, max:10, labels:['Non lo consiglierei','Lo consiglierei di sicuro'] },
+
+  { id:'commento_libero', section:'prospettive', type:'textarea', required:false,
+    text:'Hai suggerimenti o vuoi aggiungere qualcosa che non abbiamo chiesto?',
+    placeholder:'Scrivi liberamente il tuo commento (facoltativo)...', maxlength:600 },
+];
+
+/* ═══════════════════════════════════════════════════════════
+   STATO
+═══════════════════════════════════════════════════════════ */
+let step = 0;
+const answers = {};
+const skillValues = {};
+SOFT_SKILLS.forEach(s => { skillValues[s.id] = 0; });
+const studentData = { nome:'', cognome:'', corso:'', anno:'', durata:'', azienda:'' };
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITY
+═══════════════════════════════════════════════════════════ */
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+}
+async function doLogout() {
+  await fetch('/api/logout', { method:'POST' });
+  location.href = 'login.html';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INIT — legge stato dal backend prima di mostrare qualcosa
+═══════════════════════════════════════════════════════════ */
+async function init() {
+  const res = await fetch('/api/survey');
+  if (res.status === 401) { location.href = 'login.html'; return; }
+  const data = await res.json();
+
+  document.getElementById('loadingArea').style.display = 'none';
+
+  const { assignment, phase, already_submitted, resubmit_allowed, submission_count } = data;
+
+  /* Nessuna assegnazione: mostra messaggio + sezione preferenze */
+  if (!assignment) {
+    document.getElementById('surveyStageArea').style.display = 'block';
+    document.getElementById('stageStatusIcon').textContent  = '📋';
+    document.getElementById('stageStatusTitle').textContent = 'In attesa di assegnazione';
+    document.getElementById('stageStatusBody').textContent  = 'Non sei ancora stato assegnato a nessun ente. Il questionario sarà disponibile al termine del tuo stage. Nel frattempo puoi esprimere le tue preferenze qui sotto.';
+    await loadPreferenceSection();
+    return;
+  }
+
+  /* Stage non ancora iniziato o in corso */
+  if (phase === 'pre' || phase === 'durante') {
+    const isPre = phase === 'pre';
+    document.getElementById('surveyStageArea').style.display = 'block';
+    document.getElementById('stageStatusIcon').textContent  = isPre ? '📅' : '🏢';
+    document.getElementById('stageStatusTitle').textContent = isPre ? 'Il tuo stage inizierà presto' : 'Stage in corso';
+    document.getElementById('stageStatusBody').textContent  = isPre
+      ? 'Il questionario sarà disponibile al termine del tuo stage.'
+      : 'Stai svolgendo il tuo stage. Il questionario sarà disponibile al termine.';
+
+    // Formatta orari di lavoro (personalizzati o quelli dell'ente)
+    const orariDaUsare = assignment.orari_personalizzati || assignment.ente_orari_lavoro;
+    const nomiGiorni   = { lunedi:'Lunedì', martedi:'Martedì', mercoledi:'Mercoledì',
+                           giovedi:'Giovedì', venerdi:'Venerdì', sabato:'Sabato', domenica:'Domenica' };
+    let orariHtml = '';
+    if (orariDaUsare && typeof orariDaUsare === 'object') {
+      const righe = Object.entries(nomiGiorni)
+        .filter(([k]) => orariDaUsare[k] && orariDaUsare[k].attivo)
+        .map(([k]) =>
+          '<tr><td style="padding:0.15rem 1rem 0.15rem 0;font-weight:600;color:#374151;">' + nomiGiorni[k] + '</td>' +
+          '<td style="color:#1e40af;">' + orariDaUsare[k].inizio + ' &ndash; ' + orariDaUsare[k].fine + '</td></tr>'
+        ).join('');
+      if (righe) {
+        orariHtml = '<div style="margin-top:1rem;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:0.75rem 1rem;">' +
+          '<div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#1d4ed8;margin-bottom:0.5rem;">🕐 Orari di lavoro</div>' +
+          '<table style="font-size:0.88rem;border-collapse:collapse;width:100%;">' + righe + '</table>' +
+          '</div>';
+      }
+    }
+
+    const det = document.getElementById('stageDetail');
+    det.style.display = 'block';
+    det.innerHTML =
+      '🏢 <strong>' + esc(assignment.ente_nome) + '</strong><br>' +
+      '📅 Inizio: <strong>' + fmtDate(assignment.data_inizio) + '</strong><br>' +
+      '🏁 Fine: <strong>'   + fmtDate(assignment.data_fine)   + '</strong>' +
+      (assignment.ente_indirizzo ? '<br>📍 ' + esc(assignment.ente_indirizzo) : '') +
+      (assignment.ente_referente ? '<br>👤 ' + esc(assignment.ente_referente) : '') +
+      orariHtml;
+    return;
+  }
+
+  /* Già compilato senza autorizzazione */
+  if (already_submitted && !resubmit_allowed) {
+    document.getElementById('surveyBlockedArea').style.display = 'block';
+    document.getElementById('submissionHistoryBox').textContent =
+      'Hai compilato il questionario ' + submission_count + ' volta/e.';
+    return;
+  }
+
+  /* Pre-compila azienda se lo studente ha un'assegnazione */
+  if (assignment && assignment.ente_nome && !studentData.azienda) {
+    studentData.azienda = assignment.ente_nome;
+    studentData._aziendaPrecompilata = true;
+  }
+
+  /* Mostra questionario */
+  document.getElementById('surveyActiveArea').style.display = 'block';
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PREFERENZE ENTI
+═══════════════════════════════════════════════════════════ */
+let _prefEnti = [];
+
+async function loadPreferenceSection() {
+  try {
+    const [entiRes, prefRes] = await Promise.all([
+      fetch('/api/enti'),
+      fetch('/api/my-preferences')
+    ]);
+    if (!entiRes.ok) return;
+    const entiData = await entiRes.json();
+    const prefData = prefRes.ok ? await prefRes.json() : { preferences: [] };
+    _prefEnti = entiData.enti || [];
+    const prefs = prefData.preferences || [];
+
+    const placeholders = [
+      '1ª preferenza...',
+      '2ª preferenza (opzionale)...',
+      '3ª preferenza (opzionale)...'
+    ];
+    ['prefSelect1', 'prefSelect2', 'prefSelect3'].forEach((id, i) => {
+      const sel = document.getElementById(id);
+      sel.innerHTML = `<option value="">${placeholders[i]}</option>` +
+        _prefEnti.map(e => `<option value="${e.id}">${esc(e.nome)}</option>`).join('');
+      const saved = prefs.find(p => p.ordine === i + 1);
+      if (saved) sel.value = saved.ente_id;
+    });
+
+    document.getElementById('surveyPrefArea').style.display = 'block';
+  } catch (err) {
+    console.error('Errore caricamento preferenze enti:', err);
+  }
+}
+
+async function savePreferences() {
+  const ids = [
+    document.getElementById('prefSelect1').value,
+    document.getElementById('prefSelect2').value,
+    document.getElementById('prefSelect3').value,
+  ].filter(v => v).map(Number);
+
+  const msg = document.getElementById('prefMessage');
+
+  if (ids.length !== new Set(ids).size) {
+    msg.innerHTML = '<span style="color:var(--red);">Non puoi selezionare lo stesso ente più volte.</span>';
+    return;
+  }
+
+  msg.innerHTML = '<em style="color:var(--ink-4);">Salvataggio...</em>';
+  try {
+    const res = await fetch('/api/my-preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ente_ids: ids })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      msg.innerHTML = '<span style="color:var(--accent);">✓ Preferenze salvate con successo!</span>';
+    } else {
+      msg.innerHTML = `<span style="color:var(--red);">${esc(data.error || 'Errore')}</span>`;
+    }
+  } catch {
+    msg.innerHTML = '<span style="color:var(--red);">Errore di rete.</span>';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER DISPATCHER
+═══════════════════════════════════════════════════════════ */
+function render(dir) {
+  const q   = QUESTIONS[step];
+  const sec = SECTIONS[q.section];
+  const tot = QUESTIONS.length;
+
+  /* ribbon */
+  const prog = Math.round((step / (tot - 1)) * 100);
+  document.getElementById('sectionRibbon').style.background =
+    'linear-gradient(90deg,' + sec.color + ' ' + prog + '%,var(--border) ' + prog + '%)';
+
+  /* dots */
+  const dr = document.getElementById('dotsRow');
+  dr.innerHTML = '';
+  for (let i = 0; i < tot; i++) {
+    const d = document.createElement('span');
+    d.className = 'dot' + (i < step ? ' done' : i === step ? ' cur' : '');
+    dr.appendChild(d);
+  }
+  const dn = document.createElement('span');
+  dn.className = 'dots-num';
+  dn.textContent = (step + 1) + ' / ' + tot;
+  dr.appendChild(dn);
+
+  /* section tag */
+  document.getElementById('sectionTag').innerHTML =
+    '<span class="tag-icon" style="background:' + sec.color + '22;color:' + sec.color + '">' + sec.icon + '</span>' +
+    '<span class="tag-label" style="color:' + sec.color + '">' + sec.label + '</span>';
+
+  /* pulsanti */
+  document.getElementById('btnBack').disabled = (step === 0);
+  document.getElementById('btnNext').textContent = (step === tot - 1) ? 'Invia ✓' : 'Avanti →';
+
+  const anim = dir === undefined ? '' : dir > 0 ? 'slide-r' : 'slide-l';
+  if      (q.type === 'studente')   renderStudente(anim);
+  else if (q.type === 'softskills') renderSoftSkills(anim);
+  else                              renderQuestion(q, anim);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STEP 0 — DATI STUDENTE
+═══════════════════════════════════════════════════════════ */
+function renderStudente(anim) {
+  const sd = studentData;
+  function sel(field, val) { return sd[field] === val ? 'selected' : ''; }
+  document.getElementById('qBody').innerHTML =
+    '<div class="q-text" style="margin-bottom:1.25rem">Prima di iniziare, inserisci i tuoi dati</div>' +
+    '<div class="' + anim + '">' +
+    '<div class="info-form">' +
+      '<div class="info-row">' +
+        '<div class="info-field"><label>Nome *</label>' +
+        '<input class="info-input" id="f_nome" type="text" placeholder="Es. Marco" value="' + esc(sd.nome) + '" oninput="studentData.nome=this.value.trim()"></div>' +
+        '<div class="info-field"><label>Cognome *</label>' +
+        '<input class="info-input" id="f_cognome" type="text" placeholder="Es. Rossi" value="' + esc(sd.cognome) + '" oninput="studentData.cognome=this.value.trim()"></div>' +
+      '</div>' +
+      '<div class="info-field"><label>Corso di studi *</label>' +
+      '<select class="info-select" id="f_corso" onchange="studentData.corso=this.value">' +
+        '<option value="">Seleziona corso...</option>' +
+        ['Ingegneria Informatica','Economia e Management','Design della Comunicazione','Scienze della Formazione','Giurisprudenza','Psicologia','Altro']
+          .map(c => '<option ' + sel('corso',c) + '>' + c + '</option>').join('') +
+      '</select></div>' +
+      '<div class="info-row">' +
+        '<div class="info-field"><label>Anno accademico *</label>' +
+        '<select class="info-select" id="f_anno" onchange="studentData.anno=this.value">' +
+          '<option value="">Seleziona...</option>' +
+          ['2022/2023','2023/2024','2024/2025','2025/2026']
+            .map(a => '<option ' + sel('anno',a) + '>' + a + '</option>').join('') +
+        '</select></div>' +
+        '<div class="info-field"><label>Durata stage</label>' +
+        '<select class="info-select" id="f_durata" onchange="studentData.durata=this.value">' +
+          '<option value="">Seleziona...</option>' +
+          ['Meno di 1 mese','1–3 mesi','3–6 mesi','Più di 6 mesi']
+            .map(d => '<option ' + sel('durata',d) + '>' + d + '</option>').join('') +
+        '</select></div>' +
+      '</div>' +
+      '<div class="info-field">' +
+        '<label style="display:flex;align-items:center;gap:0.5rem;">Azienda / Ente ospitante *' +
+        (sd._aziendaPrecompilata && sd.azienda
+          ? ' <span style="font-size:0.65rem;font-weight:700;letter-spacing:0.05em;background:var(--accent-lt,#ccfbf1);color:var(--accent,#0f766e);border-radius:20px;padding:0.15rem 0.5rem;text-transform:uppercase;">Pre-compilato dal professore</span>'
+          : '') +
+        '</label>' +
+        '<input class="info-input" id="f_azienda" type="text" placeholder="Nome azienda o ente" value="' + esc(sd.azienda) + '" oninput="studentData.azienda=this.value.trim();studentData._aziendaPrecompilata=false;">' +
+      '</div>' +
+    '</div>' +
+    '<div class="hint" id="hint">⚠ Compila i campi obbligatori (Nome, Cognome, Corso, Anno, Azienda).</div>' +
+    '</div>';
+}
+
+function validateStudente() {
+  if (!studentData.nome || !studentData.cognome || !studentData.corso || !studentData.anno || !studentData.azienda) {
+    document.getElementById('hint').classList.add('show');
+    return false;
+  }
+  answers['__studente__'] = Object.assign({}, studentData);
+  return true;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SOFT SKILLS — stelle + radar
+═══════════════════════════════════════════════════════════ */
+function renderSoftSkills(anim) {
+  document.getElementById('qBody').innerHTML =
+    '<div class="q-text" style="margin-bottom:.75rem">Valuta le soft skills che hai migliorato</div>' +
+    '<div class="' + anim + '">' +
+      '<div class="radar-wrap">' +
+        '<div class="radar-hint">⭐ Assegna da 1 a 5 stelle per ogni competenza</div>' +
+        '<div class="radar-canvas-wrap"><canvas id="radarCanvas" width="280" height="280"></canvas></div>' +
+        '<div class="skill-sliders" id="skillSliders"></div>' +
+      '</div>' +
+      '<div class="hint" id="hint" style="margin-top:.75rem">⚠ Valuta almeno una soft skill.</div>' +
+    '</div>';
+  buildSkillSliders();
+  drawRadar();
+}
+
+function buildSkillSliders() {
+  const wrap = document.getElementById('skillSliders');
+  wrap.innerHTML = SOFT_SKILLS.map(function(sk) {
+    const stars = [1,2,3,4,5].map(function(n) {
+      return '<span class="star' + (skillValues[sk.id] >= n ? ' lit' : '') + '"' +
+        ' onclick="setSkill(\'' + sk.id + '\',' + n + ')"' +
+        ' onmouseover="hoverStars(\'' + sk.id + '\',' + n + ')"' +
+        ' onmouseout="resetStarHover(\'' + sk.id + '\')">⭐</span>';
+    }).join('');
+    return '<div class="skill-row">' +
+      '<div class="skill-info">' +
+        '<div class="skill-name"><span class="sk-icon">' + sk.icon + '</span>' + sk.label + '</div>' +
+        '<div class="skill-bar-track">' +
+          '<div class="skill-bar-fill" id="bar_' + sk.id + '" style="width:' + (skillValues[sk.id]/5*100) + '%;background:' + sk.color + '"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="star-row" id="stars_' + sk.id + '">' + stars + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function setSkill(id, val) {
+  skillValues[id] = val;
+  answers.soft_skills = Object.assign({}, skillValues);
+  updateStarRow(id);
+  document.getElementById('bar_' + id).style.width = (val / 5 * 100) + '%';
+  drawRadar();
+  const h = document.getElementById('hint');
+  if (h) h.classList.remove('show');
+}
+
+function hoverStars(id, val) {
+  const row = document.getElementById('stars_' + id);
+  if (!row) return;
+  row.querySelectorAll('.star').forEach(function(s, i) { s.style.filter = i < val ? 'none' : 'grayscale(1) opacity(.35)'; });
+}
+function resetStarHover(id) {
+  const cur = skillValues[id];
+  const row = document.getElementById('stars_' + id);
+  if (!row) return;
+  row.querySelectorAll('.star').forEach(function(s, i) { s.style.filter = i < cur ? 'none' : 'grayscale(1) opacity(.35)'; });
+}
+function updateStarRow(id) {
+  const cur = skillValues[id];
+  const row = document.getElementById('stars_' + id);
+  if (!row) return;
+  row.querySelectorAll('.star').forEach(function(s, i) { s.classList.toggle('lit', i < cur); s.style.filter = ''; });
+}
+
+/* ── RADAR ── */
+function drawRadar() {
+  const canvas = document.getElementById('radarCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, R = W*0.38, N = SOFT_SKILLS.length;
+  ctx.clearRect(0, 0, W, H);
+  const angle = function(i) { return (Math.PI*2/N)*i - Math.PI/2; };
+
+  for (let r = 1; r <= 5; r++) {
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      const a = angle(i), rr = (r/5)*R;
+      i === 0 ? ctx.moveTo(cx+rr*Math.cos(a), cy+rr*Math.sin(a)) : ctx.lineTo(cx+rr*Math.cos(a), cy+rr*Math.sin(a));
+    }
+    ctx.closePath();
+    ctx.strokeStyle = r === 5 ? '#d4d4d0' : '#e7e5e4';
+    ctx.lineWidth = r === 5 ? 1.5 : 1; ctx.stroke();
+    ctx.fillStyle = '#a8a29e'; ctx.font = 'bold 9px Plus Jakarta Sans'; ctx.textAlign = 'center';
+    ctx.fillText(r, cx+2, cy-(r/5)*R+3);
+  }
+  for (let i = 0; i < N; i++) {
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.lineTo(cx+R*Math.cos(angle(i)), cy+R*Math.sin(angle(i)));
+    ctx.strokeStyle = '#e7e5e4'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  ctx.beginPath();
+  for (let i = 0; i < N; i++) {
+    const v = skillValues[SOFT_SKILLS[i].id] || 0, rr = (v/5)*R, a = angle(i);
+    i === 0 ? ctx.moveTo(cx+rr*Math.cos(a), cy+rr*Math.sin(a)) : ctx.lineTo(cx+rr*Math.cos(a), cy+rr*Math.sin(a));
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(15,118,110,0.18)'; ctx.fill();
+  ctx.strokeStyle = '#0f766e'; ctx.lineWidth = 2; ctx.stroke();
+  for (let i = 0; i < N; i++) {
+    const v = skillValues[SOFT_SKILLS[i].id] || 0;
+    if (v > 0) {
+      const rr = (v/5)*R, a = angle(i);
+      ctx.beginPath(); ctx.arc(cx+rr*Math.cos(a), cy+rr*Math.sin(a), 4, 0, Math.PI*2);
+      ctx.fillStyle = '#0f766e'; ctx.fill(); ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  }
+  for (let i = 0; i < N; i++) {
+    const a = angle(i), lx = cx+(R+22)*Math.cos(a), ly = cy+(R+22)*Math.sin(a);
+    ctx.font = 'bold 10px Plus Jakarta Sans'; ctx.fillStyle = '#44403c';
+    ctx.textAlign    = lx < cx-5 ? 'right' : lx > cx+5 ? 'left' : 'center';
+    ctx.textBaseline = ly < cy-5 ? 'bottom' : ly > cy+5 ? 'top' : 'middle';
+    ctx.fillText(SOFT_SKILLS[i].icon, lx, ly);
+  }
+}
+
+function validateSoftSkills() {
+  if (!Object.values(skillValues).some(function(v) { return v > 0; })) {
+    document.getElementById('hint').classList.add('show'); return false;
+  }
+  answers.soft_skills = Object.assign({}, skillValues);
+  return true;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   QUESTION RENDERER (standard)
+═══════════════════════════════════════════════════════════ */
+function renderQuestion(q, anim) {
+  const saved = answers[q.id];
+  let inner = '';
+
+  if (q.type === 'radio') {
+    inner = '<div class="opt-list" id="optList">' +
+      q.options.map(function(o) {
+        return '<div class="opt' + (saved === o ? ' sel' : '') + '" data-v="' + esc(o) + '" onclick="pickRadio(this,\'' + q.id + '\')">' +
+          '<span class="opt-circle"></span>' + esc(o) + '</div>';
+      }).join('') + '</div>';
+  }
+  else if (q.type === 'checkbox') {
+    const sv = saved || [];
+    inner = '<div class="opt-list" id="optList">' +
+      q.options.map(function(o) {
+        return '<div class="opt chk' + (sv.includes(o) ? ' sel' : '') + '" data-v="' + esc(o) + '" onclick="pickChk(this,\'' + q.id + '\')">' +
+          '<span class="opt-circle"></span>' + esc(o) + '</div>';
+      }).join('') + '</div>';
+  }
+  else if (q.type === 'scale') {
+    const nums = [];
+    for (let n = q.min; n <= q.max; n++) nums.push(n);
+    inner = '<div class="scale-wrap"><div class="scale-nums" id="scaleRow">' +
+      nums.map(function(n) {
+        return '<button class="scale-btn' + (saved === n ? ' sel' : '') + '" data-n="' + n + '" onclick="pickScale(this,\'' + q.id + '\')">' + n + '</button>';
+      }).join('') +
+      '</div><div class="scale-labels"><span>' + esc(q.labels[0]) + '</span><span>' + esc(q.labels[1]) + '</span></div></div>';
+  }
+  else if (q.type === 'textarea') {
+    const sv = saved || '', max = q.maxlength || 500;
+    inner = '<textarea class="q-textarea" id="taInput" maxlength="' + max + '" placeholder="' + esc(q.placeholder || '') + '"' +
+      ' oninput="answers[\'' + q.id + '\']=this.value;document.getElementById(\'cc\').textContent=this.value.length+\' / ' + max + '\'">' +
+      esc(sv) + '</textarea><div class="char-count" id="cc">' + sv.length + ' / ' + max + '</div>';
+  }
+
+  document.getElementById('qBody').innerHTML =
+    '<div class="q-text">' + esc(q.text) + '</div>' +
+    '<div class="' + anim + '">' + inner + '</div>' +
+    '<div class="hint" id="hint">⚠ Questa risposta è obbligatoria.</div>';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INTERAZIONI
+═══════════════════════════════════════════════════════════ */
+function pickRadio(el, id) {
+  document.querySelectorAll('#optList .opt').forEach(function(o) { o.classList.remove('sel'); });
+  el.classList.add('sel'); answers[id] = el.dataset.v; clearHint();
+}
+function pickChk(el, id) {
+  el.classList.toggle('sel');
+  answers[id] = Array.from(document.querySelectorAll('#optList .opt.sel')).map(function(o) { return o.dataset.v; });
+  clearHint();
+}
+function pickScale(el, id) {
+  document.querySelectorAll('#scaleRow .scale-btn').forEach(function(b) { b.classList.remove('sel'); });
+  el.classList.add('sel'); answers[id] = parseInt(el.dataset.n); clearHint();
+}
+function clearHint() { const h = document.getElementById('hint'); if (h) h.classList.remove('show'); }
+
+/* ═══════════════════════════════════════════════════════════
+   NAVIGAZIONE
+═══════════════════════════════════════════════════════════ */
+function validate() {
+  const q = QUESTIONS[step];
+  if (q.type === 'studente')   return validateStudente();
+  if (q.type === 'softskills') return validateSoftSkills();
+  if (!q.required) return true;
+  const a = answers[q.id];
+  if (a === undefined || a === '' || (Array.isArray(a) && !a.length)) {
+    document.getElementById('hint').classList.add('show'); return false;
+  }
+  return true;
+}
+function goNext() {
+  if (!validate()) return;
+  if (step < QUESTIONS.length - 1) { step++; render(1); }
+  else doSubmit();
+}
+function goBack() { if (step > 0) { step--; render(-1); } }
+
+/* ═══════════════════════════════════════════════════════════
+   INVIO AL BACKEND
+═══════════════════════════════════════════════════════════ */
+async function doSubmit() {
+  const btn = document.getElementById('btnNext');
+  btn.disabled = true;
+  btn.textContent = 'Invio...';
+  try {
+    const res = await fetch('/api/survey', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ responses: answers })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('surveyActiveArea').style.display = 'none';
+      document.getElementById('surveySuccessArea').style.display = 'block';
+    } else {
+      alert(data.error || "Errore nell'invio. Riprova.");
+      btn.disabled = false;
+      btn.textContent = 'Invia ✓';
+    }
+  } catch(e) {
+    alert('Errore di rete. Riprova.');
+    btn.disabled = false;
+    btn.textContent = 'Invia ✓';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

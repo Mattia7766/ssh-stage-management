@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisi ETS — Stage Review</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        body { padding: 0; display: block; background: #f1f5f9; }
+
+        /* page-specific */
+        .section-title {
+            font-size: 0.78rem; font-weight: 700; color: #78716c;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            margin: 2rem 0 1rem;
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .section-title::after { content:''; flex:1; height:1px; background: #e8eaed; }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 1.1rem; margin-bottom: 2rem; }
+        .kpi-card { background: #fff; border-radius: 14px; padding: 1.4rem 1.5rem; border: 1px solid #e8eaed; box-shadow: 0 1px 4px rgba(0,0,0,.04); display: flex; align-items: center; gap: 1rem; }
+        .kpi-icon { width: 46px; height: 46px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+        .kpi-icon.teal   { background: #ccfbf1; }
+        .kpi-icon.amber  { background: #fef3c7; }
+        .kpi-icon.green  { background: #dcfce7; }
+        .kpi-icon.purple { background: #ede9fe; }
+        .kpi-value { font-size: 2rem; font-weight: 800; line-height: 1; font-family: 'Plus Jakarta Sans',sans-serif; }
+        .kpi-value.teal   { color: #0d9488; }
+        .kpi-value.amber  { color: #d97706; }
+        .kpi-value.green  { color: #16a34a; }
+        .kpi-value.purple { color: #7c3aed; }
+        .kpi-label { font-size: 0.75rem; color: #78716c; font-weight: 600; margin-top: 0.2rem; }
+        .chart-grid { display: grid; grid-template-columns: repeat(12,1fr); gap: 1.25rem; }
+        .col-12 { grid-column: span 12; }
+        .col-7  { grid-column: span 7; }
+        .col-5  { grid-column: span 5; }
+        .col-6  { grid-column: span 6; }
+        @media(max-width:900px){ .col-7,.col-5,.col-6 { grid-column: span 12; } }
+        .chart-card { background: #fff; border-radius: 14px; padding: 1.5rem; border: 1px solid #e8eaed; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+        .chart-card h3 { font-size: 0.97rem; font-weight: 700; color: #1c1917; margin-bottom: 0.3rem; font-family: 'Plus Jakarta Sans',sans-serif; }
+        .chart-desc { font-size: 0.8rem; color: #a8a29e; margin-bottom: 1.25rem; line-height: 1.5; }
+        .chart-wrap { position: relative; }
+        .h-300 { height: 300px; }
+        .h-380 { height: 380px; }
+        .h-420 { height: 420px; }
+        .h-dyn { }
+        .loading-overlay { position: fixed; inset:0; background: rgba(255,255,255,.9); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; gap: 1rem; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #e8eaed; border-top-color: #0d9488; border-radius: 50%; animation: spin .8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-overlay p { font-weight: 600; color: #78716c; font-size: 0.9rem; }
+        .ets-podium { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+        .ets-card { background: #fff; border-radius: 14px; padding: 1.5rem; border: 2px solid transparent; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+        .ets-card.gold   { border-color: #fbbf24; background: linear-gradient(135deg,#fffbeb,#fef3c7); }
+        .ets-card.silver { border-color: #94a3b8; background: linear-gradient(135deg,#f8fafc,#f1f5f9); }
+        .ets-card.bronze { border-color: #d97706; background: linear-gradient(135deg,#fef3c7,#fffbeb); }
+        .ets-card .rank  { font-size: 2rem; margin-bottom: 0.5rem; }
+        .ets-card .name  { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.3rem; word-break: break-word; }
+        .ets-card .score-row { display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.75rem; }
+        .ets-card .score { font-size: 2rem; font-weight: 800; color: #0d9488; }
+        .ets-card .score-label { font-size: 0.78rem; color: #78716c; }
+        .ets-card .students { font-size: 0.82rem; color: #78716c; margin-top: 0.4rem; }
+        .score-bar-wrap { margin-top: 0.6rem; }
+        .score-bar-bg { height: 8px; background: #e8eaed; border-radius: 4px; overflow: hidden; }
+        .score-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+        .ets-table-wrap { overflow-x: auto; }
+        table.ets-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        .ets-table th { text-align: left; padding: 0.75rem 1rem; background: #f4f2ee; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #78716c; }
+        .ets-table td { padding: 0.85rem 1rem; border-bottom: 1px solid #e8eaed; vertical-align: middle; }
+        .ets-table tr:last-child td { border-bottom: none; }
+        .ets-table tr:hover td { background: #f8f9fb; }
+        .score-pill { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem; }
+        .score-pill.high   { background: #dcfce7; color: #15803d; }
+        .score-pill.mid    { background: #fef3c7; color: #b45309; }
+        .score-pill.low    { background: #fee2e2; color: #dc2626; }
+        .empty-state { text-align: center; padding: 3rem; color: #a8a29e; }
+        #refreshBar { position: fixed; bottom:0; left:0; height:3px; width:0%; background: linear-gradient(90deg,#0d9488,#7c3aed); transition: width 30s linear; z-index:9999; pointer-events:none; }
+
+        /* ── Radar per ETS ── */
+        .ets-radar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
+        .ets-radar-card { background: #fff; border-radius: 14px; padding: 1.5rem; border: 1px solid #e8eaed; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+        .ets-radar-card .erc-name { font-size: 0.95rem; font-weight: 700; color: #1c1917; margin-bottom: 0.2rem; word-break: break-word; }
+        .ets-radar-card .erc-sub  { font-size: 0.78rem; color: #78716c; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+        .erc-wrap { height: 230px; position: relative; }
+        .btn-more-radars {
+            background: #fff; border: 1.5px solid #e8eaed; color: #7c3aed;
+            font-weight: 700; border-radius: 10px; padding: 0.7rem 2rem;
+            cursor: pointer; font-size: 0.87rem; font-family: inherit;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04); transition: all 0.18s;
+            width: auto;
+        }
+        .btn-more-radars:hover { border-color: #7c3aed; background: #f5f3ff; transform: none; box-shadow: 0 2px 8px rgba(124,58,237,.12); }
+    </style>
+</head>
+<body>
+
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Analisi ETS in corso...</p>
+</div>
+<div id="refreshBar"></div>
+
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-name">Stage<em>·</em>Review</div>
+            <div class="brand-role">Admin</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Principale</div>
+            <a class="nav-item" href="dashboard.html"><i class="fa fa-house"></i> Dashboard</a>
+            <a class="nav-item" href="dashboard.html#createUser"><i class="fa fa-users"></i> Gestione Utenti</a>
+            <a class="nav-item" href="dashboard.html#responses"><i class="fa fa-clipboard-list"></i> Questionari</a>
+            <a class="nav-item" href="enti.html"><i class="fa fa-school"></i> Enti &amp; Stage</a>
+            <div class="nav-label">Analisi</div>
+            <a class="nav-item" href="charts.html"><i class="fa fa-chart-bar"></i> Grafici</a>
+            <a class="nav-item active" href="ets_analysis.html"><i class="fa fa-building"></i> Analisi ETS</a>
+            <div class="nav-label">Sistema</div>
+            <a class="nav-item" href="dashboard.html#importExport"><i class="fa fa-database"></i> Import / Export</a>
+            <button class="nav-item danger" onclick="fetch('/api/logout',{method:'POST'}).then(()=>location.href='login.html')" style="margin-top:0.75rem;">
+                <i class="fa fa-right-from-bracket"></i> Logout
+            </button>
+        </nav>
+        <div class="sidebar-footer">Stage·Review v1.0</div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div style="display:flex;align-items:center;gap:0.875rem;">
+                <button class="hamburger" onclick="openSidebar()"><i class="fa fa-bars"></i></button>
+                <span class="topbar-title"><i class="fa fa-building" style="color:#0d9488;margin-right:0.4rem;"></i>Analisi per ETS</span>
+            </div>
+            <div class="topbar-actions">
+                <span id="lastUpdate" style="font-size:0.75rem;color:#a8a29e;"></span>
+                <button class="tb-btn" onclick="loadAndRender()"><i class="fa fa-rotate"></i> Aggiorna</button>
+            </div>
+        </header>
+
+        <main class="page-body">
+            <!-- KPI -->
+            <div class="kpi-row" id="kpiRow">
+                <div class="kpi-card"><div class="kpi-icon teal">🏢</div><div><div class="kpi-value teal"  id="kpiEts">—</div><div class="kpi-label">ETS totali</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon amber">👥</div><div><div class="kpi-value amber" id="kpiAvgStud">—</div><div class="kpi-label">Media studenti/ETS</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon green">🏆</div><div><div class="kpi-value green" id="kpiTopScore">—</div><div class="kpi-label">Miglior punteggio ETS</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon purple">⭐</div><div><div class="kpi-value purple" id="kpiTopName" style="font-size:1rem;line-height:1.3;max-width:160px;word-break:break-word;">—</div><div class="kpi-label">ETS più apprezzato</div></div></div>
+            </div>
+
+            <!-- PODIO -->
+            <div class="section-title"><i class="fa fa-trophy" style="color:#f59e0b;"></i> Classifica ETS</div>
+            <div id="podiumSection"></div>
+
+            <!-- GRAFICI -->
+            <div class="section-title"><i class="fa fa-chart-pie" style="color:#0d9488;"></i> Distribuzione studenti</div>
+            <div class="chart-grid">
+                <div class="chart-card col-12">
+                    <h3>Distribuzione studenti per ETS</h3>
+                    <p class="chart-desc">Peso percentuale di ogni ETS sul totale degli studenti assegnati. Mostra quali aziende ospitano la maggior parte degli stagisti.</p>
+                    <div class="chart-wrap h-380"><canvas id="studentiDonut"></canvas></div>
+                </div>
+            </div>
+
+            <div class="chart-grid" style="margin-top:1.25rem;">
+                <div class="chart-card col-12">
+                    <h3>Indice di Soddisfazione per ETS</h3>
+                    <p class="chart-desc">Media ponderata delle principali dimensioni di qualità (formazione, pratica, supporto, benessere, crescita) su scala 1–5. Più alto è il punteggio, più positiva è stata l'esperienza degli studenti in quell'azienda.</p>
+                    <div class="chart-wrap h-420" id="scoreWrap"><canvas id="scoreChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- RADAR PER ETS -->
+            <div class="section-title" id="radarSectionTitle" style="display:none"><i class="fa fa-chart-line" style="color:#7c3aed;"></i> Radar qualità per ETS</div>
+            <div id="radarEtsSection" style="display:none">
+                <div class="ets-radar-grid" id="radarEtsTop"></div>
+                <div id="radarEtsMoreWrap" style="display:none;margin-top:1.25rem;text-align:center;">
+                    <button id="radarEtsMoreBtn" class="btn-more-radars" onclick="toggleMoreRadars()">
+                        <i class="fa fa-chevron-down"></i> Mostra tutti gli altri ETS
+                    </button>
+                </div>
+                <div class="ets-radar-grid" id="radarEtsRest" style="display:none;margin-top:1.25rem;"></div>
+            </div>
+
+            <!-- TABELLA -->
+            <div class="section-title" style="margin-top:2rem;"><i class="fa fa-table" style="color:#7c3aed;"></i> Dettaglio per ETS</div>
+            <div class="chart-card col-12" style="margin-bottom:2rem;">
+                <h3>Tabella riepilogativa</h3>
+                <p class="chart-desc">Tutti i punteggi dettagliati per ETS, ordinati dal più soddisfacente al meno. Utile per confronti diretti tra aziende.</p>
+                <div class="ets-table-wrap" id="etsTable"></div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+
+function openSidebar()  { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('open'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
+
+
+// ─── HELPERS ───────────────────────────────────────────────────────────────
+function escapeHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+var COLORS = ["#0d9488","#7c3aed","#f59e0b","#f43f5e","#06b6d4","#10b981","#8b5cf6","#d97706","#0891b2","#059669","#6d28d9","#ea580c"];
+
+var _charts = {};
+function mc(id, cfg) {
+    if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+    var el = document.getElementById(id);
+    if (!el) return;
+    _charts[id] = new Chart(el, cfg);
+}
+
+function mean(arr) {
+    var nums = arr.filter(function(v){ return v !== null && v !== undefined && !isNaN(Number(v)) && Number(v) > 0; });
+    if (!nums.length) return 0;
+    return nums.reduce(function(a,b){ return a + Number(b); }, 0) / nums.length;
+}
+
+function scoreColor(s) { return s >= 4 ? '#0d9488' : s >= 3 ? '#f59e0b' : '#dc2626'; }
+function scorePillClass(s) { return s >= 4 ? 'high' : s >= 3 ? 'mid' : 'low'; }
+
+function renderRadar(id, labels, avgs, max) {
+    mc(id, { type:"radar", data:{ labels:labels, datasets:[{label:"Media",data:avgs,backgroundColor:"rgba(124,58,237,0.15)",borderColor:"#7c3aed",borderWidth:2,pointBackgroundColor:"#7c3aed"}] }, options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:max||5,ticks:{stepSize:1,font:{size:10}},pointLabels:{font:{size:10}}}},plugins:{legend:{display:false}}} });
+}
+
+// ─── RADAR PER ETS ────────────────────────────────────────────────────────────
+var _etsSorted = [], _etsSatKeys = [], _radarRestRendered = false, _radarEtsOpen = false;
+
+function buildRadarCard(ets, idx) {
+    return '<div class="ets-radar-card">' +
+        '<div class="erc-name">' + escapeHtml(ets.name) + '</div>' +
+        '<div class="erc-sub">👥 ' + ets.count + ' studente/i &nbsp;' +
+        '<span class="score-pill ' + scorePillClass(ets.score) + '" style="font-size:0.75rem;padding:0.1rem 0.45rem;">' + ets.score + ' / 5</span></div>' +
+        '<div class="erc-wrap"><canvas id="radarEts_' + idx + '"></canvas></div>' +
+        '</div>';
+}
+
+function renderEtsRadars(sorted, satKeys) {
+    _etsSorted = sorted; _etsSatKeys = satKeys;
+    _radarRestRendered = false; _radarEtsOpen = false;
+
+    document.getElementById('radarSectionTitle').style.display = 'none';
+    document.getElementById('radarEtsSection').style.display   = 'none';
+    document.getElementById('radarEtsMoreWrap').style.display  = 'none';
+    document.getElementById('radarEtsRest').style.display      = 'none';
+    document.getElementById('radarEtsTop').innerHTML  = '';
+    document.getElementById('radarEtsRest').innerHTML = '';
+
+    if (!sorted.length) return;
+
+    var top3 = sorted.slice(0, 3);
+    var rest  = sorted.slice(3);
+    var radarLabels = satKeys.map(function(k){ return k.label; });
+
+    document.getElementById('radarEtsTop').innerHTML = top3.map(function(e, i){ return buildRadarCard(e, i); }).join('');
+    top3.forEach(function(ets, i){ renderRadar('radarEts_' + i, radarLabels, ets.skills, 5); });
+
+    document.getElementById('radarSectionTitle').style.display = '';
+    document.getElementById('radarEtsSection').style.display   = '';
+
+    if (rest.length > 0) {
+        document.getElementById('radarEtsRest').innerHTML = rest.map(function(e, i){ return buildRadarCard(e, 3 + i); }).join('');
+        var btn = document.getElementById('radarEtsMoreBtn');
+        btn.innerHTML = '<i class="fa fa-chevron-down"></i> Mostra tutti gli altri ETS (' + rest.length + ')';
+        document.getElementById('radarEtsMoreWrap').style.display = '';
+    }
+}
+
+function toggleMoreRadars() {
+    _radarEtsOpen = !_radarEtsOpen;
+    var restDiv = document.getElementById('radarEtsRest');
+    var btn     = document.getElementById('radarEtsMoreBtn');
+    var restCnt = _etsSorted.length - 3;
+
+    restDiv.style.display = _radarEtsOpen ? '' : 'none';
+    if (_radarEtsOpen) {
+        btn.innerHTML = '<i class="fa fa-chevron-up"></i> Nascondi';
+        if (!_radarRestRendered) {
+            _radarRestRendered = true;
+            var radarLabels = _etsSatKeys.map(function(k){ return k.label; });
+            _etsSorted.slice(3).forEach(function(ets, i){
+                renderRadar('radarEts_' + (3 + i), radarLabels, ets.skills, 5);
+            });
+        }
+    } else {
+        btn.innerHTML = '<i class="fa fa-chevron-down"></i> Mostra tutti gli altri ETS (' + restCnt + ')';
+    }
+}
+
+// ─── FORMATO VECCHIO ────────────────────────────────────────────────────────
+var LIKERT = {"Moltissimo":5,"Molto":4,"Abbastanza":3,"Poco":2,"Per nulla":1};
+var OLD_SAT_KEYS = [
+    {id:"curiosita_motivazione",  label:"Motivazione"},
+    {id:"competenze_utili",       label:"Utilita comp."},
+    {id:"lavoro_gruppo",          label:"Lavoro gruppo"},
+    {id:"gestione_imprevisti",    label:"Gest. imprevisti"},
+    {id:"miglioramento_incarichi",label:"Crescita"},
+    {id:"empatia",                label:"Empatia"}
+];
+var OLD_ALL_SKILLS = [
+    {id:"rispetto_impegni",       label:"Rispetto impegni"},
+    {id:"miglioramento_incarichi",label:"Crescita personale"},
+    {id:"lavoro_gruppo",          label:"Lavoro di gruppo"},
+    {id:"empatia",                label:"Empatia"},
+    {id:"ascolto",                label:"Ascolto"},
+    {id:"comunicazione_efficace", label:"Comunicazione"},
+    {id:"gestione_imprevisti",    label:"Gest. imprevisti"},
+    {id:"curiosita_motivazione",  label:"Motivazione"},
+    {id:"competenze_utili",       label:"Utilita comp."}
+];
+
+function oldGetAvg(rs, key) {
+    var vals = rs.map(function(r){ return LIKERT[r.responses && r.responses[key]]; }).filter(function(v){ return v; });
+    return vals.length ? vals.reduce(function(a,b){return a+b;},0)/vals.length : 0;
+}
+function oldSatScore(rs) {
+    var avgs = OLD_SAT_KEYS.map(function(k){ return oldGetAvg(rs, k.id); }).filter(function(v){ return v > 0; });
+    return avgs.length ? parseFloat((avgs.reduce(function(a,b){return a+b;},0)/avgs.length).toFixed(2)) : 0;
+}
+function oldGroupByEts(rs) {
+    var g = {};
+    rs.forEach(function(r) {
+        var ets = ((r.responses && r.responses.dati_ets) || '').trim() || 'Non specificato';
+        if (!g[ets]) g[ets] = [];
+        g[ets].push(r);
+    });
+    return g;
+}
+
+// ─── FORMATO NUOVO ──────────────────────────────────────────────────────────
+var NEW_SAT_KEYS = [
+    {id:"qualita_formazione",     label:"Qualita formazione"},
+    {id:"applicazione_pratica",   label:"Pratica applicata"},
+    {id:"supporto_tutor",         label:"Supporto tutor"},
+    {id:"comunicazione_team",     label:"Comunicazione team"},
+    {id:"benessere",              label:"Benessere"},
+    {id:"crescita_professionale", label:"Crescita prof."}
+];
+var NEW_SOFT = [
+    {id:"comunicazione",    label:"Comunicazione"},
+    {id:"lavoro_squadra",   label:"Lavoro squadra"},
+    {id:"problem_solving",  label:"Problem solving"},
+    {id:"gestione_tempo",   label:"Gestione tempo"},
+    {id:"adattabilita",     label:"Adattabilita"},
+    {id:"iniziativa",       label:"Iniziativa"},
+    {id:"pensiero_critico", label:"Pensiero critico"},
+    {id:"leadership",       label:"Leadership"}
+];
+
+function newGetAvg(rs, key) {
+    var vals = rs.map(function(r){ return r.responses && r.responses[key]; }).filter(function(v){ return v !== null && v !== undefined && !isNaN(v); });
+    return vals.length ? vals.reduce(function(a,b){return a+b;},0)/vals.length : 0;
+}
+function newSatScore(rs) {
+    var avgs = NEW_SAT_KEYS.map(function(k){ return newGetAvg(rs, k.id); }).filter(function(v){ return v > 0; });
+    return avgs.length ? parseFloat((avgs.reduce(function(a,b){return a+b;},0)/avgs.length / 2).toFixed(2)) : 0; // diviso 2 per portare da 1-10 a 1-5
+}
+function newGroupByEts(rs) {
+    var g = {};
+    rs.forEach(function(r) {
+        var s = r.responses && r.responses.__studente__;
+        var ets = (s && s.azienda && s.azienda.trim()) ? s.azienda.trim() : 'Non specificato';
+        if (!g[ets]) g[ets] = [];
+        g[ets].push(r);
+    });
+    return g;
+}
+
+// ─── RENDER (condiviso) ──────────────────────────────────────────────────────
+function renderKPIs(groups, sorted) {
+    document.getElementById('kpiEts').textContent = Object.keys(groups).length;
+    var tot = Object.values(groups).reduce(function(a,b){ return a+b.length; }, 0);
+    document.getElementById('kpiAvgStud').textContent = Object.keys(groups).length ? (tot / Object.keys(groups).length).toFixed(1) : '—';
+    if (sorted.length) {
+        document.getElementById('kpiTopScore').textContent = sorted[0].score;
+        document.getElementById('kpiTopName').textContent  = sorted[0].name;
+    }
+}
+
+function renderPodium(sorted) {
+    var top3 = sorted.slice(0,3);
+    if (!top3.length) { document.getElementById('podiumSection').innerHTML = '<div class="empty-state">Nessun dato.</div>'; return; }
+    var medals = ['gold','silver','bronze'], ranks = ['🥇','🥈','🥉'];
+    var html = '<div class="ets-podium">';
+    top3.forEach(function(ets, i) {
+        var fillPct = Math.round((ets.score / 5) * 100);
+        var color = scoreColor(ets.score);
+        html += '<div class="ets-card ' + medals[i] + '">' +
+            '<div class="rank">' + ranks[i] + '</div>' +
+            '<div class="name">' + escapeHtml(ets.name) + '</div>' +
+            '<div class="students">👥 ' + ets.count + ' studente/i</div>' +
+            '<div class="score-row"><div class="score" style="color:' + color + ';">' + ets.score + '</div>' +
+            '<div class="score-label">/ 5.00 — indice soddisfazione</div></div>' +
+            '<div class="score-bar-wrap"><div class="score-bar-bg">' +
+            '<div class="score-bar-fill" style="width:' + fillPct + '%;background:' + color + ';"></div></div></div></div>';
+    });
+    html += '</div>';
+    document.getElementById('podiumSection').innerHTML = html;
+}
+
+
+function renderStudentiDonut(sorted) {
+    mc('studentiDonut', { type:'doughnut', data:{labels:sorted.map(function(e){return e.name;}), datasets:[{data:sorted.map(function(e){return e.count;}), backgroundColor:sorted.map(function(_,i){return COLORS[i%COLORS.length];}), borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'60%', plugins:{legend:{position:'bottom', labels:{font:{size:10},padding:10,boxWidth:12}}}}});
+}
+
+function renderScoreBar(sorted) {
+    var wrap = document.getElementById('scoreWrap');
+    wrap.style.height = Math.max(300, sorted.length * 42) + 'px';
+    mc('scoreChart', { type:'bar', data:{ labels:sorted.map(function(e){return e.name;}), datasets:[{label:'Indice soddisfazione', data:sorted.map(function(e){return e.score;}), backgroundColor:sorted.map(function(e){return scoreColor(e.score)+'bb';}), borderColor:sorted.map(function(e){return scoreColor(e.score);}), borderWidth:1.5, borderRadius:6}]}, options:{indexAxis:'y', responsive:true, maintainAspectRatio:false, scales:{x:{min:0,max:5,ticks:{stepSize:1}}}, plugins:{legend:{display:false}}}});
+}
+
+
+function renderTable(sorted, satKeys) {
+    if (!sorted.length) { document.getElementById('etsTable').innerHTML = '<div class="empty-state">Nessun dato.</div>'; return; }
+    var html = '<table class="ets-table"><thead><tr><th>#</th><th>ETS / Azienda</th><th>Studenti</th>' +
+        satKeys.map(function(k){ return '<th>' + k.label + '</th>'; }).join('') +
+        '<th>Soddisfazione</th></tr></thead><tbody>';
+    sorted.forEach(function(ets, i) {
+        html += '<tr><td><strong>' + (i+1) + '</strong></td><td><strong>' + escapeHtml(ets.name) + '</strong></td><td>' + ets.count + '</td>' +
+            ets.skills.map(function(s){ return '<td><span class="score-pill ' + scorePillClass(s) + '">' + (s > 0 ? s.toFixed(1) : '—') + '</span></td>'; }).join('') +
+            '<td><span class="score-pill ' + scorePillClass(ets.score) + '">' + ets.score + '</span></td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('etsTable').innerHTML = html;
+}
+
+// ─── MAIN ───────────────────────────────────────────────────────────────────
+async function loadAndRender() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    try {
+        var res = await fetch("/api/admin/survey-responses");
+        if (res.status === 401) { location.href = "login.html"; return; }
+        var data = await res.json();
+        var rs = data.responses || [];
+
+        if (!rs.length) {
+            document.getElementById('podiumSection').innerHTML = '<div class="empty-state">📭 Nessuna risposta ancora.</div>';
+            return;
+        }
+
+        // Rileva formato
+        var firstResp = rs[0].responses || {};
+        var isNew = "__studente__" in firstResp || "chiarezza_obiettivi" in firstResp || "raccomandazione" in firstResp || "soft_skills" in firstResp;
+
+        var groups, sorted, satKeys, skillKeys, getAvgFn, maxVal;
+
+        if (isNew) {
+            groups = newGroupByEts(rs);
+            satKeys = NEW_SAT_KEYS;
+            skillKeys = NEW_SOFT;
+            getAvgFn = newGetAvg;
+            maxVal = 5; // dopo normalizzazione
+            sorted = Object.entries(groups).map(function(entry) {
+                var name = entry[0], resps = entry[1];
+                return { name:name, count:resps.length, score:newSatScore(resps), skills:satKeys.map(function(k){ return parseFloat((newGetAvg(resps,k.id)/2).toFixed(2)); }) };
+            }).sort(function(a,b){ return b.score-a.score; });
+            var radarGetAvg = function(resps, key) { return parseFloat((newGetAvg(resps,key)/2).toFixed(2)); };
+        } else {
+            groups = oldGroupByEts(rs);
+            satKeys = OLD_SAT_KEYS;
+            skillKeys = OLD_ALL_SKILLS;
+            getAvgFn = oldGetAvg;
+            maxVal = 5;
+            sorted = Object.entries(groups).map(function(entry) {
+                var name = entry[0], resps = entry[1];
+                return { name:name, count:resps.length, score:oldSatScore(resps), skills:satKeys.map(function(k){ return parseFloat(oldGetAvg(resps,k.id).toFixed(2)); }) };
+            }).sort(function(a,b){ return b.score-a.score; });
+        }
+
+        renderKPIs(groups, sorted);
+        renderPodium(sorted);
+        renderStudentiDonut(sorted.slice().sort(function(a,b){ return b.count-a.count; }));
+        renderScoreBar(sorted);
+        renderEtsRadars(sorted, satKeys);
+        renderTable(sorted, satKeys);
+
+        document.getElementById('lastUpdate').textContent =
+            'Aggiornato: ' + new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+    } catch(e) {
+        console.error(e);
+    } finally {
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+    startRefreshBar();
+}
+
+function startRefreshBar() {
+    var bar = document.getElementById('refreshBar');
+    bar.style.transition = 'none'; bar.style.width = '0%';
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        bar.style.transition = 'width 30s linear'; bar.style.width = '100%';
+    }); });
+}
+
+setInterval(loadAndRender, 30000);
+window.onload = loadAndRender;
+
+</script>
+</body>
+</html>

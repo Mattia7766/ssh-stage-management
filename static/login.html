@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accesso — Stage·Review</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { align-items: center; padding-top: 0; }
+        .login-wrap {
+            width: 100%; max-width: 420px;
+            display: flex; flex-direction: column; align-items: center; gap: 1.75rem;
+        }
+        .login-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem; color: var(--dark); text-align: center;
+        }
+        .login-logo em { color: var(--primary); font-style: normal; }
+        .login-logo small {
+            display: block; font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.8rem; font-weight: 500; color: var(--gray-400);
+            letter-spacing: 0.06em; text-transform: uppercase; margin-top: 0.25rem;
+        }
+        .login-card {
+            width: 100%; background: var(--white);
+            padding: 2.5rem 2rem; border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+        }
+        .login-card h2 {
+            font-size: 1.5rem; margin-bottom: 0.4rem;
+        }
+        .login-card .subtitle {
+            font-size: 0.88rem; color: var(--gray-400); margin-bottom: 1.75rem;
+        }
+        .field-label {
+            display: block; font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.07em; text-transform: uppercase;
+            color: var(--gray-600); margin-bottom: 0.35rem;
+        }
+        .field-group { margin-bottom: 1.1rem; }
+        .field-group input { margin-bottom: 0; }
+        .login-footer {
+            text-align: center; font-size: 0.8rem;
+            color: var(--gray-400); margin-top: 0.5rem;
+        }
+        #loginMessage { margin-top: 0.75rem; }
+    </style>
+</head>
+<body>
+<div class="login-wrap">
+
+    <div class="login-logo">
+        Stage<em>·</em>Review
+        <small>Portale valutazione formativa</small>
+    </div>
+
+    <div class="login-card">
+        <h2>Bentornato</h2>
+        <p class="subtitle">Inserisci le tue credenziali per accedere</p>
+
+        <div class="field-group">
+            <label class="field-label" for="email">Email</label>
+            <input id="email" type="email" placeholder="nome@esempio.it"
+                   onkeydown="if(event.key==='Enter') login()">
+        </div>
+        <div class="field-group">
+            <label class="field-label" for="password">Password</label>
+            <input id="password" type="password" placeholder="••••••••"
+                   onkeydown="if(event.key==='Enter') login()">
+        </div>
+
+        <button onclick="login()">Accedi</button>
+        <div id="loginMessage"></div>
+
+        <p class="login-footer">Accesso riservato agli utenti registrati</p>
+    </div>
+
+</div>
+<script src="js/app.js?v=4"></script>
+<script>
+// Override del login per mostrare errore inline invece di alert
+const _origLogin = window.login;
+async function login() {
+    const email    = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const msg      = document.getElementById('loginMessage');
+    msg.innerHTML  = '';
+    const res  = await fetch('/api/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        if (data.ruolo === 'ADMIN')       location.href = 'dashboard.html';
+        else if (data.ruolo === 'PROFESSORE') location.href = 'dashboard_prof.html';
+        else                              location.href = 'survey.html';
+    } else {
+        msg.innerHTML = '<div class="error">' + (data.error || 'Credenziali non valide') + '</div>';
+    }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Professore</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Stili specifici dashboard professore — il resto è in style.css */
+        .stat-card-clickable small { color: var(--primary); font-size: 0.78rem; }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <nav class="navbar">
+        <div class="nav-brand">Stage<em style="color:var(--primary);font-style:normal;">·</em>Review <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:0.75rem;font-weight:600;color:var(--gray-400);letter-spacing:0.06em;text-transform:uppercase;vertical-align:middle;margin-left:0.5rem;">Prof</span></div>
+        <div class="dropdown">
+            <button class="dropbtn" id="menuToggle">Menu <i class="fa fa-caret-down"></i></button>
+            <div class="dropdown-content" id="dropdownMenu">
+                <a href="#" onclick="showProfSection('dashboard')"><i class="fa fa-house" style="width:16px;margin-right:0.4rem;"></i>Dashboard</a>
+                <a href="#" onclick="showProfSection('studenti')"><i class="fa fa-users" style="width:16px;margin-right:0.4rem;"></i>Gestisci Studenti</a>
+                <a href="#" onclick="showProfSection('enti')"><i class="fa fa-building" style="width:16px;margin-right:0.4rem;"></i>Gestisci Enti</a>
+                <a href="#" onclick="showProfSection('assegnazioni')"><i class="fa fa-clipboard-list" style="width:16px;margin-right:0.4rem;"></i>Assegnazioni</a>
+                <a href="#" onclick="showProfSection('risposte')"><i class="fa fa-chart-bar" style="width:16px;margin-right:0.4rem;"></i>Risposte Questionari</a>
+                <a href="#" onclick="logout()"><i class="fa fa-right-from-bracket" style="width:16px;margin-right:0.4rem;"></i>Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ╔══════════════════════════╗ -->
+    <!-- ║  DASHBOARD               ║ -->
+    <!-- ╚══════════════════════════╝ -->
+    <div id="dashboardSection" class="section active">
+        <h2>Benvenuto, Professore</h2>
+        <p style="color:var(--gray-600);margin-bottom:1.5rem;">Gestisci studenti, enti e assegnazioni di stage dal menu.</p>
+        <div class="stats">
+            <div class="stat-card stat-card-clickable" id="profStudCount" onclick="showProfSection('studenti')" title="Gestisci studenti">Caricamento...</div>
+            <div class="stat-card stat-card-clickable" id="profEntiCount" onclick="showProfSection('enti')" title="Gestisci enti">Caricamento...</div>
+            <div class="stat-card stat-card-clickable" id="profAssignCount" onclick="showProfSection('assegnazioni')" title="Vedi assegnazioni">Caricamento...</div>
+        </div>
+    </div>
+
+    <!-- ╔══════════════════════════╗ -->
+    <!-- ║  STUDENTI                ║ -->
+    <!-- ╚══════════════════════════╝ -->
+    <div id="studentiSection" class="section">
+        <h2>Gestisci Studenti</h2>
+
+        <div class="form-card">
+            <h3 style="margin-bottom:1rem;font-size:1.2rem;"><i class="fa fa-user-plus" style="color:var(--primary);margin-right:0.5rem;"></i>Crea nuovo studente</h3>
+            <div class="search-row">
+                <div class="search-field">
+                    <input id="newStudEmail" type="email" placeholder="Email studente" style="margin-bottom:0;">
+                </div>
+                <div class="search-field">
+                    <input id="newStudPassword" type="password" placeholder="Password" style="margin-bottom:0;">
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <button onclick="createStudent()" style="width:auto;padding:0.875rem 1.5rem;">Crea studente</button>
+                </div>
+            </div>
+            <div id="createStudMessage" style="margin-top:0.75rem;"></div>
+        </div>
+
+        <div class="form-card" style="margin-top:0;">
+            <div class="search-row">
+                <div class="search-field">
+                    <input id="searchStudEmail" type="text" placeholder="Filtra per email..." oninput="filterStudents()" style="margin-bottom:0;">
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <button onclick="clearStudSearch()" style="width:auto;padding:0.875rem 1.25rem;background:var(--gray-600);">Azzera</button>
+                </div>
+            </div>
+        </div>
+
+        <table id="studentsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Email</th>
+                    <th>Stage assegnato</th>
+                    <th>Questionario</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody id="studentsTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- ╔══════════════════════════╗ -->
+    <!-- ║  ENTI                    ║ -->
+    <!-- ╚══════════════════════════╝ -->
+    <div id="entiSection" class="section">
+        <h2>Gestisci Enti</h2>
+
+        <div class="form-card">
+            <h3 style="margin-bottom:1rem;font-size:1.2rem;"><i class="fa fa-plus" style="color:var(--primary);margin-right:0.5rem;"></i>Nuovo ente</h3>
+            <div class="search-row" style="flex-wrap:wrap;">
+                <div class="search-field" style="flex:2;min-width:200px;">
+                    <input id="enteNome" type="text" placeholder="Nome ente *" style="margin-bottom:0;">
+                </div>
+                <div class="search-field" style="flex:2;min-width:200px;">
+                    <input id="enteIndirizzo" type="text" placeholder="Indirizzo" style="margin-bottom:0;">
+                </div>
+                <div class="search-field" style="flex:2;min-width:200px;">
+                    <input id="enteReferente" type="text" placeholder="Referente" style="margin-bottom:0;">
+                </div>
+                <div class="search-field" style="flex:1;min-width:120px;">
+                    <input id="entePosti" type="number" min="0" placeholder="Posti disponibili" style="margin-bottom:0;">
+                </div>
+            </div>
+            <div style="margin-top:0.75rem;">
+                <input id="enteDescrizione" type="text" placeholder="Descrizione (opzionale)" style="margin-bottom:0;">
+            </div>
+            <!-- Orari lavorativi -->
+            <div style="border:1px solid var(--gray-200);border-radius:12px;padding:1rem;margin-top:0.75rem;background:#f8fafc;">
+                <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--gray-600);margin-bottom:0.75rem;">Orari lavorativi (opzionale)</p>
+                <div id="profNewOrariGrid"></div>
+            </div>
+            <div style="margin-top:0.75rem;">
+                <button onclick="createEnte()" style="width:auto;padding:0.875rem 1.5rem;">Crea ente</button>
+            </div>
+            <div id="createEnteMessage" style="margin-top:0.5rem;"></div>
+        </div>
+
+        <div id="entiGrid" class="enti-grid">
+            <div class="empty-placeholder"><div class="ep-icon"><i class="fa fa-spinner fa-spin"></i></div><p>Caricamento enti...</p></div>
+        </div>
+    </div>
+
+    <!-- ╔══════════════════════════╗ -->
+    <!-- ║  ASSEGNAZIONI            ║ -->
+    <!-- ╚══════════════════════════╝ -->
+    <div id="assegnazioniSection" class="section">
+        <h2>Assegnazioni Stage</h2>
+
+        <div class="form-card">
+            <h3 style="margin-bottom:1rem;font-size:1.2rem;"><i class="fa fa-plus" style="color:var(--primary);margin-right:0.5rem;"></i>Nuova assegnazione</h3>
+            <div class="assign-modal-grid">
+                <div>
+                    <label style="font-size:0.85rem;font-weight:600;color:var(--gray-600);">Studente *</label>
+                    <select id="assignUser" style="margin-top:0.25rem;"></select>
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;font-weight:600;color:var(--gray-600);">Ente *</label>
+                    <select id="assignEnte" onchange="profCheckDisponibilita()" style="margin-top:0.25rem;"></select>
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;font-weight:600;color:var(--gray-600);">Data inizio *</label>
+                    <input id="assignDataInizio" type="date" onchange="profCheckDisponibilita()" style="margin-top:0.25rem;margin-bottom:0;">
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;font-weight:600;color:var(--gray-600);">Data fine *</label>
+                    <input id="assignDataFine" type="date" onchange="profCheckDisponibilita()" style="margin-top:0.25rem;margin-bottom:0;">
+                </div>
+            </div>
+            <div id="profAssignDispBox"></div>
+            <div style="margin-top:0.75rem;">
+                <input id="assignNote" type="text" placeholder="Note (opzionale)" style="margin-bottom:0;">
+            </div>
+            <!-- Orari personalizzati -->
+            <div style="margin-top:0.75rem;">
+                <label style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.85rem;font-weight:600;color:var(--gray-700);cursor:pointer;">
+                    <input type="checkbox" id="profOrariToggle" onchange="profToggleOrariPers()" style="width:15px;height:15px;">
+                    Personalizza orari per questo studente
+                </label>
+                <div id="profOrariPersSection" style="display:none;margin-top:0.75rem;border:1px solid var(--gray-200);border-radius:12px;padding:1rem;background:#f8fafc;">
+                    <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--gray-600);margin-bottom:0.75rem;">Orari personalizzati</p>
+                    <div id="profNewOrariPersGrid"></div>
+                </div>
+            </div>
+            <div style="margin-top:0.75rem;">
+                <button onclick="createAssignment()" style="width:auto;padding:0.875rem 2rem;">Assegna studente</button>
+            </div>
+            <div id="createAssignMessage" style="margin-top:0.5rem;"></div>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table id="assignmentsTable">
+                <thead>
+                    <tr>
+                        <th>Studente</th>
+                        <th>Ente</th>
+                        <th>Data inizio</th>
+                        <th>Data fine</th>
+                        <th>Fase</th>
+                        <th>Note</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="assignmentsTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ╔══════════════════════════╗ -->
+    <!-- ║  RISPOSTE QUESTIONARI    ║ -->
+    <!-- ╚══════════════════════════╝ -->
+    <div id="risposteSection" class="section">
+        <h2>Risposte ai Questionari</h2>
+
+        <div class="form-card" style="margin-bottom:1.5rem;">
+            <div class="search-row">
+                <div class="search-field">
+                    <input id="filterRStudente" type="text" placeholder="Filtra per studente..." oninput="filterProfResponses()" style="margin-bottom:0;">
+                </div>
+                <div class="search-field">
+                    <input id="filterRETS" type="text" placeholder="Filtra per ETS..." oninput="filterProfResponses()" style="margin-bottom:0;">
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <button onclick="clearProfFilters()" style="width:auto;padding:0.875rem 1.25rem;background:var(--gray-600);">Azzera</button>
+                </div>
+            </div>
+        </div>
+
+        <p id="noRisultatoMsg" style="display:none;text-align:center;color:var(--gray-600);padding:3rem;"><i class="fa fa-inbox" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;opacity:0.4;"></i>Nessuna risposta trovata.</p>
+        <div style="overflow-x:auto;">
+            <table id="profResponsesTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th style="width:40px;"></th>
+                        <th>Studente / Email</th>
+                        <th>ETS</th>
+                        <th>Data invio</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="profResponsesBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div><!-- /dashboard-container -->
+
+<script src="js/app.js?v=4"></script>
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════════════════
+let profStudents    = [];
+let profEnti        = [];
+let profAssignments = [];
+let profResponses   = [];
+let profResponseCounts = {};
+let profAssignCounts   = {};  // { ente_id: count }
+let profAssignForce    = false;
+
+// ══════════════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════════════════════════
+function showProfSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(id + 'Section').classList.add('active');
+    if (id === 'dashboard')      loadProfStats();
+    if (id === 'studenti')       loadStudents();
+    if (id === 'enti')           loadEnti();
+    if (id === 'assegnazioni')   loadAssegnazioni();
+    if (id === 'risposte')       loadProfResponses();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════════════════
+async function initProfDashboard() {
+    const r = await fetch("/api/admin/users");
+    if (r.status === 401) { location.href = "login.html"; return; }
+    loadProfStats();
+    setupDropdown();
+}
+
+async function loadProfStats() {
+    try {
+        const [uR, eR, aR] = await Promise.all([
+            fetch("/api/admin/users"),
+            fetch("/api/enti"),
+            fetch("/api/assignments"),
+        ]);
+        const uD = await uR.json();
+        const eD = await eR.json();
+        const aD = await aR.json();
+
+        const students = (uD.users || []).filter(u => u.ruolo === "USER");
+
+        document.getElementById("profStudCount").innerHTML = `
+            <div class="stat-icon"><i class="fa fa-users"></i></div>
+            <h3>${students.length}</h3><p>Studenti</p>`;
+        document.getElementById("profEntiCount").innerHTML = `
+            <div class="stat-icon"><i class="fa fa-building"></i></div>
+            <h3>${(eD.enti || []).length}</h3><p>Enti</p>`;
+        document.getElementById("profAssignCount").innerHTML = `
+            <div class="stat-icon"><i class="fa fa-clipboard-list"></i></div>
+            <h3>${(aD.assignments || []).length}</h3><p>Assegnazioni</p>`;
+    } catch(e) { console.error(e); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  STUDENTI
+// ══════════════════════════════════════════════════════════════════════════
+async function loadStudents() {
+    const [uR, rR, aR] = await Promise.all([
+        fetch("/api/admin/users"),
+        fetch("/api/admin/survey-responses"),
+        fetch("/api/assignments"),
+    ]);
+    const uD = await uR.json();
+    const rD = await rR.json();
+    const aD = await aR.json();
+
+    profStudents = (uD.users || []).filter(u => u.ruolo === "USER");
+    profResponseCounts = {};
+    (rD.responses || []).forEach(r => {
+        profResponseCounts[r.user_id] = (profResponseCounts[r.user_id] || 0) + 1;
+    });
+
+    // Mappa assegnazioni per studente
+    const assignMap = {};
+    (aD.assignments || []).forEach(a => { assignMap[a.user_id] = a; });
+
+    renderStudentsTable(profStudents, assignMap);
+    populateStudentSelect(profStudents);
+}
+
+function filterStudents() {
+    const f = (document.getElementById("searchStudEmail").value || "").toLowerCase();
+    const filtered = profStudents.filter(u => u.email.toLowerCase().includes(f));
+    renderStudentsTable(filtered, {});
+}
+
+function clearStudSearch() {
+    document.getElementById("searchStudEmail").value = "";
+    loadStudents();
+}
+
+function renderStudentsTable(students, assignMap) {
+    const tbody = document.getElementById("studentsTableBody");
+    if (!students.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--gray-600);padding:2rem;">Nessuno studente trovato.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = "";
+    students.forEach(u => {
+        const count   = profResponseCounts[u.id] || 0;
+        const assign  = assignMap[u.id];
+        let stageCell = "<span style='color:var(--gray-400);'>Nessuno</span>";
+        if (assign) {
+            const phase = computePhase(assign.data_inizio, assign.data_fine);
+            const phaseLabel = { pre: "Prima dell'inizio", durante: "In corso", post: "Terminato" };
+            stageCell = `<span class="assigned-badge phase-${phase}">${escapeHtml(assign.ente_nome)}</span>
+                         <small style="color:var(--gray-600);">${fmt(assign.data_inizio)} → ${fmt(assign.data_fine)}</small>
+                         <br><small><span class="badge phase-${phase}" style="font-size:0.75rem;">${phaseLabel[phase]}</span></small>`;
+        }
+        const surveyCell = count > 0
+            ? `<span class="badge badge--submitted">${count} risposta/e</span>
+               <button class="btn-icon" onclick="viewUserSurveys(${u.id},'${escapeHtml(u.email)}')" style="margin-left:0.4rem;" title="Vedi risposte"><i class="fa fa-eye"></i></button>
+               ${!u.resubmit_allowed ? `<button class="btn-authorize" onclick="authResubmit(${u.id})" style="margin-left:0.3rem;"><i class="fa fa-lock-open"></i> Autorizza</button>` : `<button class="btn-revoke" onclick="revokeResubmit(${u.id})" style="margin-left:0.3rem;" title="Revoca"><i class="fa fa-lock"></i></button>`}`
+            : `<span class="badge badge--gray">Nessuna</span>`;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${u.id}</td>
+            <td>${escapeHtml(u.email)}</td>
+            <td>${stageCell}</td>
+            <td>${surveyCell}</td>
+            <td>
+                <button class="btn-delete" onclick="deleteStudent(${u.id})" style="width:auto;padding:0.4rem 0.8rem;" title="Elimina"><i class="fa fa-trash"></i></button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+async function createStudent() {
+    const email    = document.getElementById("newStudEmail").value.trim();
+    const password = document.getElementById("newStudPassword").value;
+    const msg      = document.getElementById("createStudMessage");
+    if (!email || !password) { msg.innerHTML = '<div class="error">Email e password obbligatorie</div>'; return; }
+    const res  = await fetch("/api/admin/users", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email, password, ruolo: "USER" })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        msg.innerHTML = `<div class="success">${data.message}</div>`;
+        document.getElementById("newStudEmail").value    = "";
+        document.getElementById("newStudPassword").value = "";
+        loadStudents();
+    } else {
+        msg.innerHTML = `<div class="error">${data.error}</div>`;
+    }
+}
+
+async function deleteStudent(userId) {
+    if (!confirm("Eliminare questo studente? I suoi dati verranno persi.")) return;
+    const res  = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+    const data = await res.json();
+    if (res.ok) loadStudents();
+    else alert(data.error);
+}
+
+async function authResubmit(userId) {
+    if (!confirm("Autorizzare questo studente a compilare nuovamente il questionario?")) return;
+    const res = await fetch(`/api/admin/users/${userId}/allow-resubmit`, { method: "POST" });
+    if (res.ok) loadStudents();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  ENTI
+// ══════════════════════════════════════════════════════════════════════════
+async function loadEnti() {
+    const [eR, aR] = await Promise.all([fetch("/api/enti"), fetch("/api/assignments")]);
+    if (!eR.ok) return;
+    const eD = await eR.json();
+    const aD = await aR.json();
+    profEnti = eD.enti || [];
+    profAssignCounts = {};
+    (aD.assignments || []).forEach(a => {
+        profAssignCounts[a.ente_id] = (profAssignCounts[a.ente_id] || 0) + 1;
+    });
+    renderEntiGrid(profEnti);
+    populateEnteSelect(profEnti);
+    // Init orari grid for new ente form
+    if (document.getElementById("profNewOrariGrid") &&
+        !document.getElementById("profNewOr_lunedi_attivo")) {
+        _buildOrariGrid("profNewOrariGrid", "profNewOr", null);
+    }
+}
+
+function profPostiHtml(e) {
+    if (e.posti_disponibili == null) return `<span style="font-size:0.8rem;background:#f1f5f9;color:#64748b;padding:0.2rem 0.6rem;border-radius:6px;">posti illimitati</span>`;
+    const used = profAssignCounts[e.id] || 0;
+    const free = e.posti_disponibili - used;
+    if (free <= 0) return `<span style="font-size:0.8rem;background:#fee2e2;color:#991b1b;padding:0.2rem 0.6rem;border-radius:6px;">Completo (${e.posti_disponibili})</span>`;
+    const warn = free <= Math.max(1, Math.floor(e.posti_disponibili * 0.2));
+    return `<span style="font-size:0.8rem;background:${warn ? '#fef3c7' : '#d1fae5'};color:${warn ? '#92400e' : '#065f46'};padding:0.2rem 0.6rem;border-radius:6px;">${free}/${e.posti_disponibili} posti</span>`;
+}
+
+function renderEntiGrid(enti) {
+    const grid = document.getElementById("entiGrid");
+    if (!enti.length) {
+        grid.innerHTML = `<div class="empty-placeholder"><div class="ep-icon"><i class="fa fa-building"></i></div><p>Nessun ente ancora. Creane uno!</p></div>`;
+        return;
+    }
+    grid.innerHTML = "";
+    enti.forEach(e => {
+        const card = document.createElement("div");
+        card.className = "ente-card";
+        card.innerHTML = `
+            <h4><i class="fa fa-building" style="color:#0f766e;margin-right:0.45rem;font-size:0.9em;"></i>${escapeHtml(e.nome)}</h4>
+            <div class="ente-meta">
+                ${e.indirizzo   ? `<div><i class="fa fa-location-dot" style="color:#a8a29e;width:14px;margin-right:0.35rem;"></i>${escapeHtml(e.indirizzo)}</div>`   : ""}
+                ${e.referente   ? `<div><i class="fa fa-user" style="color:#a8a29e;width:14px;margin-right:0.35rem;"></i>${escapeHtml(e.referente)}</div>`   : ""}
+                ${e.descrizione ? `<div><i class="fa fa-file-lines" style="color:#a8a29e;width:14px;margin-right:0.35rem;"></i>${escapeHtml(e.descrizione)}</div>` : ""}
+            </div>
+            <div style="margin-top:0.6rem;">${profPostiHtml(e)}</div>
+            <div class="ente-actions">
+                <button class="btn-icon" onclick="editEnteModal(${e.id})" title="Modifica"><i class="fa fa-pen"></i> Modifica</button>
+                <button class="btn-delete" onclick="deleteEnte(${e.id})" style="width:auto;padding:0.4rem 0.8rem;" title="Elimina"><i class="fa fa-trash"></i></button>
+            </div>`;
+        grid.appendChild(card);
+    });
+}
+
+async function createEnte() {
+    const nome        = document.getElementById("enteNome").value.trim();
+    const indirizzo   = document.getElementById("enteIndirizzo").value.trim();
+    const referente   = document.getElementById("enteReferente").value.trim();
+    const descrizione = document.getElementById("enteDescrizione").value.trim();
+    const postiVal    = document.getElementById("entePosti").value;
+    const posti       = postiVal !== "" ? parseInt(postiVal) : null;
+    const orari       = _readOrariGrid("profNewOr");
+    const msg         = document.getElementById("createEnteMessage");
+
+    if (!nome) { msg.innerHTML = '<div class="error">Il nome e obbligatorio</div>'; return; }
+    const res  = await fetch("/api/enti", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ nome, indirizzo, referente, descrizione,
+                               posti_disponibili: posti, orari_lavoro: orari })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        msg.innerHTML = `<div class="success">${data.message}</div>`;
+        ["enteNome","enteIndirizzo","enteReferente","enteDescrizione","entePosti"].forEach(id =>
+            document.getElementById(id).value = "");
+        _buildOrariGrid("profNewOrariGrid", "profNewOr", null);
+        loadEnti();
+    } else {
+        msg.innerHTML = `<div class="error">${data.error}</div>`;
+    }
+}
+
+async function deleteEnte(enteId) {
+    if (!confirm("Eliminare questo ente? Anche le assegnazioni collegate verranno rimosse.")) return;
+    const res  = await fetch(`/api/enti/${enteId}`, { method: "DELETE" });
+    const data = await res.json();
+    if (res.ok) loadEnti();
+    else alert(data.error);
+}
+
+function editEnteModal(enteId) {
+    const ente = profEnti.find(e => e.id === enteId);
+    if (!ente) return;
+
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:560px;overflow-y:auto;max-height:90vh;">
+            <span class="close-modal" onclick="this.closest('.modal').remove()">&times;</span>
+            <h3>Modifica ente</h3>
+            <input id="editNome"        type="text"   value="${escapeHtml(ente.nome)}"            placeholder="Nome *">
+            <input id="editIndirizzo"   type="text"   value="${escapeHtml(ente.indirizzo||'')}"   placeholder="Indirizzo">
+            <input id="editReferente"   type="text"   value="${escapeHtml(ente.referente||'')}"   placeholder="Referente">
+            <input id="editDescrizione" type="text"   value="${escapeHtml(ente.descrizione||'')}" placeholder="Descrizione">
+            <input id="editPosti"       type="number" value="${ente.posti_disponibili != null ? ente.posti_disponibili : ''}"
+                   min="0" placeholder="Posti disponibili (vuoto = illimitati)">
+            <div style="border:1px solid #e2e8f0;border-radius:12px;padding:1rem;margin-top:0.5rem;background:#f8fafc;">
+                <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin-bottom:0.75rem;">Orari lavorativi</p>
+                <div id="editOrariGrid"></div>
+            </div>
+            <div id="editEnteMsg"></div>
+            <button onclick="saveEnte(${enteId})" style="margin-top:0.75rem;">Salva</button>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+    _buildOrariGrid("editOrariGrid", "editOr", ente.orari_lavoro || null);
+}
+
+async function saveEnte(enteId) {
+    const nome        = document.getElementById("editNome").value.trim();
+    const indirizzo   = document.getElementById("editIndirizzo").value.trim();
+    const referente   = document.getElementById("editReferente").value.trim();
+    const descrizione = document.getElementById("editDescrizione").value.trim();
+    const postiVal    = document.getElementById("editPosti").value;
+    const posti       = postiVal !== "" ? parseInt(postiVal) : null;
+    const orari       = _readOrariGrid("editOr");
+    const msg         = document.getElementById("editEnteMsg");
+
+    if (!nome) { msg.innerHTML = '<div class="error">Il nome e obbligatorio</div>'; return; }
+    const res  = await fetch(`/api/enti/${enteId}`, {
+        method: "PUT", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ nome, indirizzo, referente, descrizione,
+                               posti_disponibili: posti, orari_lavoro: orari })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        document.querySelector(".modal")?.remove();
+        loadEnti();
+    } else {
+        msg.innerHTML = `<div class="error">${data.error}</div>`;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  ASSEGNAZIONI
+// ══════════════════════════════════════════════════════════════════════════
+async function loadAssegnazioni() {
+    const [uR, eR, aR] = await Promise.all([
+        fetch("/api/admin/users"),
+        fetch("/api/enti"),
+        fetch("/api/assignments"),
+    ]);
+    const uD = await uR.json();
+    const eD = await eR.json();
+    const aD = await aR.json();
+
+    profStudents    = (uD.users || []).filter(u => u.ruolo === "USER");
+    profEnti        = eD.enti || [];
+    profAssignments = aD.assignments || [];
+
+    profAssignCounts = {};
+    profAssignments.forEach(a => {
+        profAssignCounts[a.ente_id] = (profAssignCounts[a.ente_id] || 0) + 1;
+    });
+
+    populateStudentSelect(profStudents);
+    populateEnteSelect(profEnti);
+    renderAssignmentsTable(profAssignments);
+
+    // Reset disponibilita box and force flag
+    const dispBox = document.getElementById("profAssignDispBox");
+    if (dispBox) dispBox.innerHTML = "";
+    profAssignForce = false;
+}
+
+function populateStudentSelect(students) {
+    const sel = document.getElementById("assignUser");
+    if (!sel) return;
+    sel.innerHTML = `<option value="">-- Seleziona studente --</option>` +
+        students.map(s => `<option value="${s.id}">${escapeHtml(s.email)}</option>`).join("");
+}
+
+function populateEnteSelect(enti) {
+    const sel = document.getElementById("assignEnte");
+    if (!sel) return;
+    sel.innerHTML = `<option value="">-- Seleziona ente --</option>` +
+        enti.map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join("");
+}
+
+function computePhase(inizio, fine) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (today < inizio) return "pre";
+    if (today > fine)   return "post";
+    return "durante";
+}
+
+function fmt(d) {
+    if (!d) return "";
+    return new Date(d).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function renderAssignmentsTable(assignments) {
+    const tbody = document.getElementById("assignmentsTableBody");
+    if (!assignments.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--gray-600);padding:2rem;">Nessuna assegnazione.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = "";
+    const phaseLabel = { pre: "Prima dell'inizio", durante: "In corso", post: "Terminato" };
+    const phaseClass = { pre: "phase-pre", durante: "phase-durante", post: "phase-post" };
+    assignments.forEach(a => {
+        const phase = computePhase(a.data_inizio, a.data_fine);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${escapeHtml(a.student_email)}</td>
+            <td>${escapeHtml(a.ente_nome)}</td>
+            <td>${fmt(a.data_inizio)}</td>
+            <td>${fmt(a.data_fine)}</td>
+            <td><span class="badge ${phaseClass[phase]}">${phaseLabel[phase]}</span></td>
+            <td>${escapeHtml(a.note || "")}</td>
+            <td>
+                <button class="btn-icon" onclick="editAssignmentModal(${a.id})" title="Modifica"><i class="fa fa-pen"></i></button>
+                <button class="btn-delete" onclick="deleteAssignment(${a.id})" style="width:auto;padding:0.35rem 0.7rem;margin-left:0.3rem;" title="Elimina"><i class="fa fa-trash"></i></button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+async function profCheckDisponibilita() {
+    const enteId = parseInt(document.getElementById("assignEnte")?.value);
+    const inizio = document.getElementById("assignDataInizio")?.value;
+    const fine   = document.getElementById("assignDataFine")?.value;
+    const box    = document.getElementById("profAssignDispBox");
+    if (!box) return;
+
+    if (!enteId || !inizio || !fine || inizio > fine) { box.innerHTML = ""; return; }
+
+    const ente = profEnti.find(e => e.id === enteId);
+
+    box.innerHTML = `<div style="margin-top:0.5rem;padding:0.6rem 0.9rem;border-radius:8px;font-size:0.85rem;
+        background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;">Controllo disponibilità...</div>`;
+
+    const res  = await fetch(`/api/enti/${enteId}/disponibilita?data_inizio=${inizio}&data_fine=${fine}`);
+    const data = await res.json();
+    if (!res.ok) { box.innerHTML = ""; return; }
+
+    const { posti_totali, posti_occupati, posti_liberi, disponibile, occupato_fino_a } = data;
+    profAssignForce = false;
+
+    if (posti_totali == null) {
+        box.innerHTML = `<div style="margin-top:0.5rem;padding:0.6rem 0.9rem;border-radius:8px;font-size:0.85rem;font-weight:600;
+            background:#f0f9ff;color:#0369a1;border:1px solid #7dd3fc;">
+            Nessun limite di posti configurato per questo ente.
+        </div>`;
+        return;
+    }
+
+    if (disponibile) {
+        const warn = posti_liberi <= Math.max(1, Math.floor(posti_totali * 0.2));
+        box.innerHTML = `<div style="margin-top:0.5rem;padding:0.6rem 0.9rem;border-radius:8px;font-size:0.85rem;font-weight:600;
+            background:${warn ? '#fef3c7' : '#d1fae5'};color:${warn ? '#92400e' : '#065f46'};
+            border:1px solid ${warn ? '#fcd34d' : '#6ee7b7'};">
+            Posti disponibili: <strong>${posti_liberi} / ${posti_totali}</strong>
+            &mdash; ${posti_occupati} occupat${posti_occupati === 1 ? 'o' : 'i'} nel periodo
+        </div>`;
+    } else {
+        const finoA = occupato_fino_a
+            ? ` L'ente torna disponibile dal <strong>${new Date(occupato_fino_a).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})}</strong>.`
+            : "";
+        box.innerHTML = `<div style="margin-top:0.5rem;padding:0.6rem 0.9rem;border-radius:8px;font-size:0.85rem;font-weight:600;
+            background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;">
+            Tutti i ${posti_totali} posti sono occupati nel periodo selezionato.${finoA}
+            <div style="margin-top:0.4rem;">
+                <button onclick="profForceProceed()" style="width:auto;padding:0.35rem 0.9rem;
+                    background:#dc2626;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.82rem;">
+                    Continua comunque
+                </button>
+            </div>
+        </div>`;
+    }
+}
+
+function profForceProceed() {
+    profAssignForce = true;
+    const box = document.getElementById("profAssignDispBox");
+    if (box) box.innerHTML = `<div style="margin-top:0.5rem;padding:0.6rem 0.9rem;border-radius:8px;
+        font-size:0.85rem;font-weight:600;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;">
+        Procederai anche se l'ente e al completo.
+    </div>`;
+}
+
+function profToggleOrariPers() {
+    const cb  = document.getElementById("profOrariToggle");
+    const sec = document.getElementById("profOrariPersSection");
+    if (!sec) return;
+    sec.style.display = cb.checked ? "" : "none";
+    if (cb.checked) {
+        const enteId = parseInt(document.getElementById("assignEnte")?.value);
+        const ente   = profEnti.find(e => e.id === enteId);
+        _buildOrariGrid("profNewOrariPersGrid", "profPersNew", ente?.orari_lavoro || null);
+    }
+}
+
+async function createAssignment() {
+    const user_id     = document.getElementById("assignUser").value;
+    const ente_id     = document.getElementById("assignEnte").value;
+    const data_inizio = document.getElementById("assignDataInizio").value;
+    const data_fine   = document.getElementById("assignDataFine").value;
+    const note        = document.getElementById("assignNote").value.trim();
+    const msg         = document.getElementById("createAssignMessage");
+
+    if (!user_id || !ente_id || !data_inizio || !data_fine) {
+        msg.innerHTML = '<div class="error">Tutti i campi con * sono obbligatori</div>'; return;
+    }
+
+    const ente = profEnti.find(e => e.id === parseInt(ente_id));
+    ofAssignForce) {
+        msg.innerHTML = '<div class="error">⚠️ Ente al completo. Clicca "Continua comunque" per procedere ugualmente.</div>';
+        return;
+    }
+
+    // Leggi orari personalizzati
+    const orariCb   = document.getElementById("profOrariToggle");
+    const orariPers = (orariCb && orariCb.checked) ? _readOrariGrid("profPersNew") : null;
+
+    const res = await fetch("/api/assignments", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            user_id: parseInt(user_id),
+            ente_id: parseInt(ente_id),
+            data_inizio, data_fine, note,
+            orari_personalizzati: orariPers
+        })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        msg.innerHTML = '<div class="success">Assegnazione creata con successo.</div>';
+        // Reset form
+        document.getElementById("assignUser").value      = "";
+        document.getElementById("assignEnte").value      = "";
+        document.getElementById("assignDataInizio").value = "";
+        document.getElementById("assignDataFine").value   = "";
+        document.getElementById("assignNote").value       = "";
+        const dispBox = document.getElementById("profAssignDispBox");
+        if (dispBox) dispBox.innerHTML = "";
+        const orariSec = document.getElementById("profOrariPersSection");
+        if (orariSec) orariSec.style.display = "none";
+        if (orariCb) orariCb.checked = false;
+        profAssignForce = false;
+        loadAssegnazioni();
+    } else {
+        msg.innerHTML = `<div class="error">${data.error || "Errore durante l'assegnazione."}</div>`;
+    }
+}
+
+function editAssignmentModal(assignId) {
+    const a = profAssignments.find(x => x.id === assignId);
+    if (!a) return;
+
+    // Remove any existing edit modal
+    const existing = document.getElementById("editAssignModal");
+    if (existing) existing.remove();
+
+    const entiOpts = profEnti.map(e =>
+        `<option value="${e.id}" ${e.id === a.ente_id ? "selected" : ""}>${escapeHtml(e.nome)}</option>`
+    ).join("");
+
+    const modal = document.createElement("div");
+    modal.id        = "editAssignModal";
+    modal.className = "modal";
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:480px;">
+            <span class="close-modal" onclick="document.getElementById('editAssignModal').remove()">&times;</span>
+            <h3>Modifica Assegnazione</h3>
+            <p style="color:var(--gray-600);font-size:0.88rem;margin-bottom:1rem;">Studente: <strong>${escapeHtml(a.student_email)}</strong></p>
+
+            <label style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--gray-600);display:block;margin-bottom:0.3rem;">Ente *</label>
+            <select id="eaEnte" onchange="eaCheckDisp(${assignId})" style="margin-bottom:0.75rem;">
+                ${entiOpts}
+            </select>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                <div>
+                    <label style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--gray-600);display:block;margin-bottom:0.3rem;">Data inizio *</label>
+                    <input type="date" id="eaInizio" value="${a.data_inizio}" onchange="eaCheckDisp(${assignId})" style="margin-bottom:0;">
+                </div>
+                <div>
+                    <label style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--gray-600);display:block;margin-bottom:0.3rem;">Data fine *</label>
+                    <input type="date" id="eaFine" value="${a.data_fine}" onchange="eaCheckDisp(${assignId})" style="margin-bottom:0;">
+                </div>
+            </div>
+
+            <div id="eaDispBox" style="margin-bottom:0.75rem;"></div>
+
+            <label style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--gray-600);display:block;margin-bottom:0.3rem;">Note</label>
+            <input type="text" id="eaNote" value="${escapeHtml(a.note || '')}" style="margin-bottom:0.75rem;">
+
+            <label style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.85rem;font-weight:600;color:var(--gray-700);cursor:pointer;margin-bottom:0.75rem;">
+                <input type="checkbox" id="eaOrariToggle" onchange="eaToggleOrari(${assignId})" style="width:15px;height:15px;">
+                Personalizza orari per questo studente
+            </label>
+            <div id="eaOrariSection" style="display:none;border:1px solid var(--gray-200);border-radius:12px;padding:1rem;background:#f8fafc;margin-bottom:0.75rem;">
+                <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--gray-600);margin-bottom:0.75rem;">Orari personalizzati</p>
+                <div id="eaOrariGrid"></div>
+            </div>
+
+            <div id="eaSaveMsg" style="margin-bottom:0.5rem;"></div>
+            <div style="display:flex;gap:0.75rem;">
+                <button onclick="document.getElementById('editAssignModal').remove()" style="flex:1;background:var(--gray-100);color:var(--gray-600);border:1px solid var(--border);box-shadow:none;">Annulla</button>
+                <button onclick="saveAssignment(${assignId})" style="flex:2;">Salva modifiche</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+
+    // Pre-populate orari personalizzati if present
+    if (a.orari_personalizzati) {
+        const cb = document.getElementById("eaOrariToggle");
+        const sec = document.getElementById("eaOrariSection");
+        if (cb && sec) {
+            cb.checked = true;
+            sec.style.display = "";
+            _buildOrariGrid("eaOrariGrid", "eaOrs", a.orari_personalizzati);
+        }
+    }
+}
+
+let eaForce = false;
+
+async function eaCheckDisp(excludeId) {
+    const enteId = parseInt(document.getElementById("eaEnte")?.value);
+    const inizio = document.getElementById("eaInizio")?.value;
+    const fine   = document.getElementById("eaFine")?.value;
+    const box    = document.getElementById("eaDispBox");
+    if (!box || !enteId || !inizio || !fine || inizio > fine) { if (box) box.innerHTML = ""; return; }
+
+    box.innerHTML = `<div style="padding:0.5rem 0.75rem;border-radius:8px;font-size:0.85rem;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;">Controllo...</div>`;
+
+    const res  = await fetch(`/api/enti/${enteId}/disponibilita?data_inizio=${inizio}&data_fine=${fine}&exclude=${excludeId}`);
+    const data = await res.json();
+    if (!res.ok) { box.innerHTML = ""; return; }
+
+    const { posti_totali, posti_occupati, posti_liberi, disponibile, occupato_fino_a } = data;
+    eaForce = false;
+
+    if (posti_totali == null) {
+        box.innerHTML = `<div style="padding:0.5rem 0.75rem;border-radius:8px;font-size:0.85rem;background:#f0f9ff;color:#0369a1;border:1px solid #7dd3fc;">Nessun limite di posti configurato.</div>`;
+        return;
+    }
+    if (disponibile) {
+        const warn = posti_liberi <= Math.max(1, Math.floor(posti_totali * 0.2));
+        box.innerHTML = `<div style="padding:0.5rem 0.75rem;border-radius:8px;font-size:0.85rem;font-weight:600;
+            background:${warn ? '#fef3c7' : '#d1fae5'};color:${warn ? '#92400e' : '#065f46'};
+            border:1px solid ${warn ? '#fcd34d' : '#6ee7b7'};">
+            Posti disponibili: <strong>${posti_liberi} / ${posti_totali}</strong>
+        </div>`;
+    } else {
+        const finoA = occupato_fino_a
+            ? ` Libero dal <strong>${new Date(occupato_fino_a).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})}</strong>.`
+            : "";
+        box.innerHTML = `<div style="padding:0.5rem 0.75rem;border-radius:8px;font-size:0.85rem;font-weight:600;
+            background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;">
+            Ente al completo.${finoA}
+            <button onclick="eaForce=true;this.closest('div').innerHTML='<em>Procederai comunque.</em>';"
+                style="width:auto;padding:0.25rem 0.7rem;margin-left:0.5rem;background:#dc2626;color:white;
+                border:none;border-radius:6px;cursor:pointer;font-size:0.8rem;">Continua comunque</button>
+        </div>`;
+    }
+}
+
+function eaToggleOrari(assignId) {
+    const cb  = document.getElementById("eaOrariToggle");
+    const sec = document.getElementById("eaOrariSection");
+    if (!sec) return;
+    sec.style.display = cb.checked ? "" : "none";
+    if (cb.checked) {
+        const enteId = parseInt(document.getElementById("eaEnte")?.value);
+        const ente   = profEnti.find(e => e.id === enteId);
+        const a      = profAssignments.find(x => x.id === assignId);
+        _buildOrariGrid("eaOrariGrid", "eaOrs", a?.orari_personalizzati || ente?.orari_lavoro || null);
+    }
+}
+
+async function saveAssignment(assignId) {
+    const ente_id     = document.getElementById("eaEnte").value;
+    const data_inizio = document.getElementById("eaInizio").value;
+    const data_fine   = document.getElementById("eaFine").value;
+    const note        = document.getElementById("eaNote").value.trim();
+    const msg         = document.getElementById("eaSaveMsg");
+
+    if (!ente_id || !data_inizio || !data_fine) {
+        if (msg) msg.innerHTML = '<div class="error">Tutti i campi con * sono obbligatori.</div>'; return;
+    }
+
+    const ente = profEnti.find(e => e.id === parseInt(ente_id));
+    if (ente && ente.posti_disponibili != null && !eaForce) {
+        const res2  = await fetch(`/api/enti/${ente_id}/disponibilita?data_inizio=${data_inizio}&data_fine=${data_fine}&exclude=${assignId}`);
+        const disp2 = await res2.json();
+        if (!disp2.disponibile) {
+            if (msg) msg.innerHTML = '<div class="error">Ente al completo. Clicca "Continua comunque" per procedere.</div>';
+            return;
+        }
+    }
+
+    const orariCb   = document.getElementById("eaOrariToggle");
+    const orariPers = (orariCb && orariCb.checked) ? _readOrariGrid("eaOrs") : null;
+
+    const res = await fetch(`/api/assignments/${assignId}`, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ ente_id: parseInt(ente_id), data_inizio, data_fine, note, orari_personalizzati: orariPers })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        document.getElementById("editAssignModal")?.remove();
+        loadAssegnazioni();
+    } else {
+        if (msg) msg.innerHTML = `<div class="error">${data.error || "Errore durante il salvataggio."}</div>`;
+    }
+}
+
+async function deleteAssignment(assignId) {
+    if (!confirm("Eliminare questa assegnazione? L'operazione non e' reversibile.")) return;
+    const res = await fetch(`/api/assignments/${assignId}`, { method: "DELETE" });
+    if (res.ok) {
+        loadAssegnazioni();
+    } else {
+        const d = await res.json();
+        alert(d.error || "Errore durante l'eliminazione.");
+    }
+}
+
+// ════════���═════════════════════════════════════════════════════════════════
+//  RISPOSTE
+// ══════════════════════════════════════════��═══════════════════════════════
+async function loadProfResponses() {
+    const res = await fetch("/api/admin/survey-responses");
+    if (!res.ok) return;
+    const data = await res.json();
+    profResponses = data.responses || [];
+    renderProfResponsesTable(profResponses);
+}
+
+function renderProfResponsesTable(responses) {
+    const table = document.getElementById("profResponsesTable");
+    const tbody = document.getElementById("profResponsesBody");
+    const noMsg = document.getElementById("noRisultatoMsg");
+    if (!table || !tbody) return;
+    if (!responses.length) {
+        table.style.display = "none";
+        if (noMsg) noMsg.style.display = "block";
+        return;
+    }
+    if (noMsg) noMsg.style.display = "none";
+    table.style.display = "";
+    tbody.innerHTML = "";
+    responses.forEach(r => {
+        const nome = escapeHtml(r.responses?.dati_alunno || r.email || "—");
+        const ets  = escapeHtml(r.responses?.dati_ets   || "—");
+        const data = new Date(r.submitted_at).toLocaleString("it-IT",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td style="text-align:center;">
+                <button onclick="profToggleDetail(this)" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--gray-100);cursor:pointer;font-size:0.85rem;padding:0;box-shadow:none;">▶</button>
+            </td>
+            <td>${nome}</td>
+            <td>${ets}</td>
+            <td>${data}</td>
+            <td><button class="btn-delete" onclick="deleteProfResponse(${r.id},this)" style="width:auto;padding:0.35rem 0.75rem;font-size:0.82rem;" title="Elimina"><i class="fa fa-trash"></i></button></td>`;
+        const detailTr = document.createElement("tr");
+        detailTr.style.display = "none";
+        detailTr.innerHTML = `
+            <td colspan="5" style="padding:0;">
+                <div style="padding:1rem 1.5rem;background:var(--gray-50);border-top:1px solid var(--border);">
+                    <div class="response-detail-grid">${formatResponseDetails(r.responses)}</div>
+                </div>
+            </td>`;
+        tbody.appendChild(tr);
+        tbody.appendChild(detailTr);
+    });
+}
+
+function profToggleDetail(btn) {
+    const detailTr = btn.closest("tr").nextElementSibling;
+    if (!detailTr) return;
+    const open = detailTr.style.display !== "none";
+    detailTr.style.display = open ? "none" : "";
+    btn.textContent = open ? "▶" : "▼";
+}
+
+function filterProfResponses() {
+    const fs = (document.getElementById("filterRStudente").value || "").toLowerCase();
+    const fe = (document.getElementById("filterRETS").value || "").toLowerCase();
+    renderProfResponsesTable(profResponses.filter(r =>
+        (r.responses?.dati_alunno || r.email || "").toLowerCase().includes(fs) &&
+        (r.responses?.dati_ets || "").toLowerCase().includes(fe)
+    ));
+}
+
+function clearProfFilters() {
+    document.getElementById("filterRStudente").value = "";
+    document.getElementById("filterRETS").value      = "";
+    renderProfResponsesTable(profResponses);
+}
+
+async function deleteProfResponse(id, btn) {
+    if (!confirm("Eliminare questa risposta?")) return;
+    const res = await fetch(`/api/admin/survey-responses/${id}`, { method: "DELETE" });
+    if (res.ok) {
+        profResponses = profResponses.filter(r => r.id !== id);
+        renderProfResponsesTable(profResponses);
+    } else {
+        const d = await res.json();
+        alert(d.error || "Errore.");
+    }
+}
+
+// ═════════���════════════════════════════════════════════════════════════════
+//  UTILITY
+// ════════════════════════════════════════════════════════════════════════��═
+function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ═══════════════════════════════���══════════════════════════════════════════
+//  START
+// ══════════════════════════════════════════════════════════════════════════
+window.onload = initProfDashboard;
+</script>
+</body>
+</html>

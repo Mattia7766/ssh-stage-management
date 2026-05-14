@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database locale
+*.db
+*.sqlite3
+
+# Log files
+*.log
+
+# Docker
+*.pid
+
+# Secrets
+.env
+secrets/
