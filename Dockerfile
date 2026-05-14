@@ -7,6 +7,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Copia e rendi eseguibile l'entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 8888
 
-CMD ["python", "Task_server.py"]
+# Usa lo script di entrypoint invece di eseguire direttamente Python
+ENTRYPOINT ["/entrypoint.sh"]
